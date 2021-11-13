@@ -3,11 +3,12 @@ import json, sys, datetime, time, random, imdb
 appInfo = {
   "Name": "Show List",
   "Creator": "Mark E",
-  "Version": "1.1"
+  "Version": "1.2",
+  "Description": "A program that allows you to keep track of shows you're watching."
 }
 
 showsToWatch = []
-showWatching = [{"Name": "None", "Episode": 1}]
+showWatching = [{"Name": "None", "Episode": 1, "Status": "None"}]
 completedShows = []
 name = "None"
 assistantName = "Clover"
@@ -20,9 +21,9 @@ def completed():
   if not completedShows:
     input(f"[{assistantName}] 😅 < You haven't completed any shows yet! Try completing some shows first.")
   else:
-    heading("COMPLETED SHOWS")
+    heading("Menu > Completed Shows")
     for title in completedShows:
-      print(f"[->] {title}")
+      print(f"-> {title}")
     print("[i] Total items: " + str(len(completedShows)))
     input("Press ENTER to exit. | ")
 
@@ -33,8 +34,7 @@ def loopThroughShows():
 
   print("----------------------------------------------")
   for i in range(len(showWatching)):
-    print(f"[{increment}] | Show: {showWatching[i]['Name']} | EP: {showWatching[i]['Episode']}")
-    increment += 1
+    print(f"[{i}] | Show: {showWatching[i]['Name']} | EP: {showWatching[i]['Episode']} | Status: {showWatching[i]['Status']}")
   print("----------------------------------------------")
 
 def checkShow(show):
@@ -59,8 +59,9 @@ def addNewShow(show, episode: int, location=None):
     if showWatching[0]["Name"] == "None":
       showWatching[0]["Name"] = show
       showWatching[0]["Episode"] = episode
+      showWatching[0]["Status"] = "Watching"
     else:
-      showWatching.append({"Name": show, "Episode": episode})
+      showWatching.append({"Name": show, "Episode": episode, "Status": "Watching"})
   elif location == "watchingLater":
     showsToWatch.append({"Name": show, "Episode": episode})
   elif location == "both":
@@ -68,22 +69,36 @@ def addNewShow(show, episode: int, location=None):
       showWatching[0]["Name"] = show
       showWatching[0]["Episode"] = episode
     else:
-      showWatching.append({"Name": show, "Episode": episode})
+      showWatching.append({"Name": show, "Episode": episode, "Status": "Watching"})
     showsToWatch.append({"Name": show, "Episode": episode})
   json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
   
 
-def showData(show):
+def showData(show, item="all"):
   try:
-    return (
+    if item == "all":
+      return (
       f"-> SHOW: {show.data['title']}\n"
       f"-> RATING: {str(show.data['rating'])} / 10.0\n"
       f"-> GENRES: {show.data['genres']}\n"
       f"-> YEARS ACTIVE: {show.data['series years']}\n"
       f"-> VOTES: {str(show.data['votes'])}\n"
-      f"-> ABOUT: {show.data['plot'][0]}\n"
-      "| Add [a] | Search Again [s] | Exit [e]"
+      f"-> ABOUT: {show.data['plot'][0]}"
     )
+    elif item == "title":
+      return show.data['title']
+    elif item == "year":
+      return show.data['year']
+    elif item == "rating":
+      return str(show.data['rating'])
+    elif item == "votes":
+      return str(show.data['votes'])
+    elif item == "genres":
+      return show.data['genres']
+    elif item == "plot":
+      return show.data['plot'][0]
+    elif item == "episodes":
+      return ia.get_movie_episodes(show.movieID)["data"]["number of episodes"]
   except:
     return "[X] Something went wrong. Please contact [MARK] if you think there is a bug."
 
@@ -104,11 +119,10 @@ def findShow(show):
         except:
           input(f"[{assistantName}] 😅 < Please enter a valid number.")
           show = input(f"[{assistantName}] 🤔 < Which show would you like to view? (e to exit, otherwise enter the number of the show)")
-    showID = search[show].movieID
-    selected_show = ia.get_movie(showID)
+    showTitle = ia.get_movie(search[show].movieID)
     heading("SHOW INFO")
-    print(showData(selected_show))
-    selectedSearchedShow = str(selected_show)
+    print(showData(showTitle, "episodes"))
+    selectedSearchedShow = str(showTitle)
     return True
   return False
 
@@ -162,7 +176,7 @@ def listOfShows():
   if not showsToWatch:
     input("[X] Your list is empty! Go search for some shows to watch, then come here.")
   else:
-    heading("SHOWS PLANNING ON WATCHING")
+    heading("Menu > Shows to Watch")
     for title in range(len(showsToWatch)):
       print(f"[->] {showsToWatch[title]['Name']} | EP: {showsToWatch[title]['Episode']}")
     print("[i] Total items: " + str(len(showsToWatch)))
@@ -178,28 +192,28 @@ def listOfShows():
           movie_id = ia.search_movie(action.strip())[0].movieID # Search the show, get the first result, and get the movie ID.
           selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
           print(showData(selected_show))
-          #print("[✔] This show is in your upcoming show list!" if action.strip() in showsToWatch else f"[✖] This show is not in your upcoming show list!")
           return input("Press ENTER to exit. | ")
       input(f"[{assistantName}] 😅 < That show isn't in your list! Try again!")
       
 
 def about():
   global appInfo
-  heading("ABOUT")
+  heading("Menu > App Information")
   print(
     f"-> Program Name: {appInfo['Name']}\n"
     f"-> Program Creator: {appInfo['Creator']}\n"
-    f"-> Program Version: {appInfo['Version']}"
+    f"-> Program Version: {appInfo['Version']}\n"
+    f"-> Program Description: {appInfo['Description']}\n"
   )
   input("Press ENTER to exit. | ")
 
 def watching():
   global showWatching
-  heading("WATCHING")
+  heading("Menu > Currently Watching")
   for i in range(len(showWatching)):
-    print(f"| Show: {showWatching[i]['Name']} | EP: {str(showWatching[i]['Episode'])}")
+    print(f"| Show: {showWatching[i]['Name']} | EP: {str(showWatching[i]['Episode'])} | Status: {str(showWatching[i]['Status'])}")
   print("[i] Total items: " + str(len(showWatching)))
-  print("| Change [c] | Remove [r] | Exit [e]")
+  print("| Change [c] | Remove [r] | Move to Completed [m] | Exit [e]")
   action = str(input(">>> "))
   if action == "c":
     change = str(input(f"[{assistantName}] 🤔 < Change what? (name/episode) "))
@@ -217,7 +231,7 @@ def watching():
         if checkShow(title):
           return
         while True:
-          update = str(input(f"[{assistantName}] 🙂 < You're currently watching {title}? (y/n) "))
+          update = str(input(f"[{assistantName}] 🙂 < You're currently watching '{title}'? (y/n) "))
           if update.strip().lower() == "y":
             break
           title = str(input(f"[{assistantName}] 🧐 < What is the name of the show you're watching? ('e' to exit) "))
@@ -226,6 +240,7 @@ def watching():
         showWatching[edit]["Name"] = title
       else:
         return input("[X] Invalid number range.")
+      input("[✔] Process complete.")
     elif change.strip().lower() == "episode":
       loopThroughShows()
       edit = input(f"[{assistantName}] 🤔 < Which show do you want to edit? ")
@@ -242,7 +257,7 @@ def watching():
         except ValueError:
           input("[X] Invalid input, please try again!")
         while True:
-          confirm = str(input(f"[{assistantName}] 🤔 < You're currently on episode {episode} on {showWatching[0]['Name']}? (y/n)"))
+          confirm = str(input(f"[{assistantName}] 🤔 < You're currently on episode {episode} on '{showWatching[edit]['Name']}'? (y/n)"))
           if confirm.strip().lower() == "y":
             break
           episode = input(f"[{assistantName}] 🙂 < Please enter the episode number ('e' to exit). ")
@@ -253,10 +268,14 @@ def watching():
           except ValueError:
             input("[X] Invalid input, please try again!")
         showWatching[edit]["Episode"] = episode
+        if showWatching[edit]["Episode"] == showData(ia.search_movie(showWatching[edit]["Name"])[0], "episodes"):
+          showWatching[edit]["Status"] = "Complete"
+          return input(f"[✔] You've completed '{showWatching[edit]['Name']}'! Its status is now set to 'complete'.")
       else:
         return input("[X] Invalid number range.")
+      input("[✔] Process complete.")
   elif action == "r":
-    heading("REMOVE")
+    heading("Menu > Currently Watching > Remove Show")
     loopThroughShows()
     remove = input(f"[{assistantName}] 🤔 < Which show do you want to remove? ")
     try:
@@ -265,17 +284,41 @@ def watching():
       input("[X] Invalid input, please try again!")
     confirm = str(input(f"[{assistantName}] 🤔 < Are you sure you want to remove {showWatching[remove]['Name']}? (y/n) "))
     if confirm.strip().lower() == "y":
-      showWatching[remove]["Name"], showWatching[remove]["Episode"] = "None", 1
+      showWatching[remove]["Name"], showWatching[remove]["Episode"], showWatching[remove]["Status"] = "None", 1, "None"
+      input("[✔] Removed show.")
     else:
       return
+  elif action == "m":
+    heading("Menu > Currently Watching > Move Show")
+    loopThroughShows()
+    move = input(f"[{assistantName}] 🤔 < Which show do you want to move? (e to exit): ")
+    if move.strip().lower() == "e":
+      return
+    else:
+      try:
+        move = int(move)
+      except ValueError:
+        input("[X] Invalid input, please try again!")
+      if showWatching[move]["Status"] == "Watching":
+        confirm = str(input(f"[{assistantName}] 🤔 < You aren't completed with '{showWatching[move]['Name']}' yet, do you still want to move it to your list of completed shows? (y/n) "))
+        if confirm.strip().lower() == "y":
+          completedShows.append(showWatching[move]["Name"])
+          showWatching.pop(move)
+          input(f"[✔] Nice, you finished a show!")
+      elif showWatching[move]["Status"] == "Complete":
+        confirm = str(input(f"[{assistantName}] 🧐 < You've completed '{showWatching[move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
+        if confirm.strip().lower() == "y":
+          completedShows.append(showWatching[move]["Name"])
+          showWatching.pop(move)
+          input(f"[✔] Nice, you finished a show!")
   else:
     return
   json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
-  input(f"[✔] Process complete!")
     
 
 def userSettings():
   global name, showsToWatch, showWatching, completedShows
+  heading("Menu > Settings")
   print(
     f"[{assistantName}] 🤔 What are you looking to change, {name}?\n"
     "[1] Change name.\n"
@@ -288,6 +331,7 @@ def userSettings():
   except ValueError:
     input("[X] Invalid input, please try again!")
   if settings == 1:
+    heading("Menu > Settings > Change Name")
     input(f"[{assistantName}] 🙂 < Oh? You want me to call you something else? Sure! What'll it be?")
     name = str(input("> Enter your new name: "))
     while True:
@@ -301,6 +345,7 @@ def userSettings():
 
 
   elif settings == 2:
+    heading("Menu > Settings > Erase Data")
     input(f"[{assistantName}] 😨 < Wha- You want to erase your data?! Why?!")
     input(f"[{assistantName}] 😔 < No no, I'm sorry. This must be something you're deciding on your own.")
     input(f"[{assistantName}] 😥 < You do know what this means right? All the shows you added will be GONE, for GOOD! I will also not remember you, {name}...")
@@ -321,7 +366,7 @@ def userSettings():
       if confirm.strip().lower() == "y":
         input(f"[{assistantName}] 😔 < Well... it was nice meeting you, {name}. I guess this is where we part ways.")
         input(f"[{assistantName}] 😁 < Thank you for using Show List, goodbye.")
-        name, showsToWatch, showWatching, completedShows = "None", [], [{"Name": "None", "Episode": 1}], []
+        name, showsToWatch, showWatching, completedShows = "None", [], [{"Name": "None", "Episode": 1, "Status": "None"}], []
         json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
         input("[✔] Data erased successfully.")
         advance = str(input("[.] In order to continue using this program, you'll need to come up with a new name. If you want to later, type 'exit', if you want to now, type 'new'. (new/exit) "))
@@ -332,7 +377,7 @@ def userSettings():
 
 def searchShows():
   global selectedSearchedShow
-  heading("SEARCH SHOW")
+  heading("Menu > Search")
   show = str(input(f"[{assistantName}] 🧐 < What is the show you want me to find? (e to exit) "))
   if show.strip().lower() == "e":
     return
@@ -340,6 +385,7 @@ def searchShows():
   if not findShow(show):
     input(f"[{assistantName}] 😔 < Sorry, Couldn't find your show. >>")
   else:
+    print("| Add [a] | Search Again [s] | Exit [e]")
     action = str(input(">>> "))
     if action.strip().lower() == "a":
       if checkShow(selectedSearchedShow):
@@ -365,6 +411,18 @@ def searchShows():
       searchShows()
       return
 
+def cloverGreeting():
+  greetings = [
+    f"Hello, {name}! 👋",
+    f"Hey, {name}! 👋",
+    f"Hi, {name}! 👋",
+    f"Hey there, {name}! 👋",
+    f"Welcome, {name}! 👋",
+    f"Hiya, {name}! 👋",
+    f"What's up, {name}? 👋",
+  ]
+  return random.choice(greetings)
+
 def main():
   global showWatching, name, showsToWatch, completedShows, selectedSearchedShow
 
@@ -375,12 +433,12 @@ def main():
 
   if name == "None":
     create_name()
-  heading("SHOW LIST")
+  heading("Menu")
   check_time(name)
   while True:
     print(
       "------------------------------------------\n"
-      "Welcome. What're you here for?\n"
+      f"[{assistantName}] 😄 < {cloverGreeting()}\n"
       "[1] View your list of upcoming shows.\n"
       "[2] View what you're currently watching.\n"
       "[3] View completed shows.\n"
