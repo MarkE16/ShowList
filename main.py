@@ -3,75 +3,155 @@ import json, sys, datetime, time, random, imdb
 appInfo = {
   "Name": "Show List",
   "Creator": "Mark E",
-  "Version": "1.2",
+  "Version": "1.3",
   "Description": "A program that allows you to keep track of shows you're watching."
 }
 
-showsToWatch = []
-showWatching = [{"Name": "None", "Episode": 1, "Status": "None"}]
-completedShows = []
-name = "None"
+guestShowsToWatch = []
+guestShowsWatching = [{"Name": "None", "Episode": 1, "Status": "None"}]
+guestCompletedShows = []
+defaultName = "User"
+accounts = []
 assistantName = "Clover"
 increment = 0
 ia = imdb.IMDb()
 selectedSearchedShow = None # Going to be used temporarily.
 
+def checkLoggedIn():
+  global accounts, name
+  for a in accounts:
+    if a["Logged In"]:
+      name = a["Name"]
+      return (True, a)
+  return False
+
 def completed():
-  global completedShows
-  if not completedShows:
-    input(f"[{assistantName}] 😅 < You haven't completed any shows yet! Try completing some shows first.")
+  global accounts, guestCompletedShows
+  if not checkLoggedIn():
+    if not guestCompletedShows:
+      input(f"[{assistantName}] 😅 < You haven't completed any shows yet! Try completing some shows first.")
+    else:
+      heading("Menu > Completed Shows")
+      for title in guestCompletedShows:
+        print(f"-> {title}")
+      print("[i] Total items: " + str(len(guestCompletedShows)))
+      print("[i] The ability to remove shows from your completed list will come in a future update!")
+      input("Press ENTER to exit. | ")
   else:
-    heading("Menu > Completed Shows")
-    for title in completedShows:
-      print(f"-> {title}")
-    print("[i] Total items: " + str(len(completedShows)))
-    input("Press ENTER to exit. | ")
+    if not checkLoggedIn()[1]["CompletedShows"]:
+      input(f"[{assistantName}] 😅 < You haven't completed any shows yet! Try completing some shows first.")
+    else:
+      heading("Menu > Completed Shows")
+      for title in checkLoggedIn()[1]["CompletedShows"]:
+        print(f"-> {title}")
+      print("[i] Total items: " + str(len(checkLoggedIn()[1]["CompletedShows"])))
+      print("[i] The ability to remove shows from your completed list will come in a future update!")
+      input("Press ENTER to exit. | ")
 
 def loopThroughShows():
-  global showWatching, increment
+  global accounts, increment, guestShowsWatching
 
   increment = 0
 
-  print("----------------------------------------------")
-  for i in range(len(showWatching)):
-    print(f"[{i}] | Show: {showWatching[i]['Name']} | EP: {showWatching[i]['Episode']} | Status: {showWatching[i]['Status']}")
-  print("----------------------------------------------")
+  if not checkLoggedIn():
+    print("----------------------------------------------")
+    for i in range(len(guestShowsWatching)):
+      print(f"[{i}] | Show: {guestShowsWatching[i]['Name']} | EP: {guestShowsWatching[i]['Episode']} | Status: {guestShowsWatching[i]['Status']}")
+    print("----------------------------------------------")
+  else:
+    print("----------------------------------------------")
+    for i in range(len(checkLoggedIn()[1]["ShowsWatching"])):
+      print(f"[{i}] | Show: {checkLoggedIn()[1]['ShowsWatching'][i]['Name']} | EP: {checkLoggedIn()[1]['ShowsWatching'][i]['Episode']} | Status: {checkLoggedIn()[1]['ShowsWatching'][i]['Status']}")
+    print("----------------------------------------------")
 
-def checkShow(show):
-  global showWatching, showsToWatch
+def checkShow(show, location="both"):
+  global accounts
 
-  for i in range(len(showsToWatch)):
-    if showsToWatch[i]["Name"] == show:
-      input(f"[{assistantName}] 😅 < Haha, you're already planning on watching this show!")
-      return True
-  
-  for i in range(len(showWatching)):
-    if showWatching[i]["Name"] == show:
-      input(f"[{assistantName}] 😅 < Haha, you're already watching watching that show! Try again!")
-      return True
+  if not checkLoggedIn():
+    if location == "both":
+      for i in range(len(guestShowsToWatch)):
+        if guestShowsToWatch[i]["Name"] == show:
+          input(f"[{assistantName}] 😅 < Haha, you're already planning on watching this show!")
+          return True
+    
+      for i in range(len(guestShowsWatching)):
+        if guestShowsWatching[i]["Name"] == show:
+          input(f"[{assistantName}] 😅 < Haha, you're already watching watching that show! Try again!")
+          return True
+  elif location == "watchingNow":
+    for i in range(len(guestShowsWatching)):
+      if guestShowsWatching[i]["Name"] == show:
+        input(f"[{assistantName}] 😅 < Haha, you're already watching that show!")
+        return True
+  elif location == "watchingLater":
+    for i in range(len(guestShowsToWatch)):
+      if guestShowsToWatch[i]["Name"] == show:
+        input(f"[{assistantName}] 😅 < Haha, you're already planning on watching that show!")
+        return True
+  else:
+    if location == "both":
+      for i in range(len(checkLoggedIn()[1]['ShowsToWatch'])):
+        if checkLoggedIn()[1]['ShowsToWatch'][i]["Name"] == show:
+          input(f"[{assistantName}] 😅 < Haha, you're already planning on watching this show!")
+          return True
+      
+      for i in range(len(checkLoggedIn()[1]['ShowsWatching'])):
+        if checkLoggedIn()[1]['ShowsWatching'][i]["Name"] == show:
+          input(f"[{assistantName}] 😅 < Haha, you're already watching watching that show! Try again!")
+          return True
+    elif location == "watchingNow":
+      for i in range(len(checkLoggedIn()[1]['ShowsWatching'])):
+        if checkLoggedIn()[1]['ShowsWatching'][i]["Name"] == show:
+          input(f"[{assistantName}] 😅 < Haha, you're already watching that show!")
+          return True
+    elif location == "watchingLater":
+      for i in range(len(checkLoggedIn()[1]['ShowsToWatch'])):
+        if checkLoggedIn()[1]['ShowsToWatch'][i]["Name"] == show:
+          input(f"[{assistantName}] 😅 < Haha, you're already planning on watching that show!")
+          return True
   return False
 
-def addNewShow(show, episode: int, location=None):
-  global showWatching, showsToWatch, selectedSearchedShow
+def addNewShow(show, episode: int, location):
+  global accounts, selectedSearchedShow
 
-  
-  if location == "watchingNow":
-    if showWatching[0]["Name"] == "None":
-      showWatching[0]["Name"] = show
-      showWatching[0]["Episode"] = episode
-      showWatching[0]["Status"] = "Watching"
-    else:
-      showWatching.append({"Name": show, "Episode": episode, "Status": "Watching"})
-  elif location == "watchingLater":
-    showsToWatch.append({"Name": show, "Episode": episode})
-  elif location == "both":
-    if showWatching[0]["Name"] == "None":
-      showWatching[0]["Name"] = show
-      showWatching[0]["Episode"] = episode
-    else:
-      showWatching.append({"Name": show, "Episode": episode, "Status": "Watching"})
-    showsToWatch.append({"Name": show, "Episode": episode})
-  json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
+
+  if not checkLoggedIn():
+    if location == "watchingNow":
+      if guestShowsWatching[0]["Name"] == "None":
+        guestShowsWatching[0]["Name"] = show
+        guestShowsWatching[0]["Episode"] = episode
+        guestShowsWatching[0]["Status"] = "Watching"
+      else:
+        guestShowsWatching.append({"Name": show, "Episode": episode, "Status": "Watching"})
+    elif location == "watchingLater":
+      guestShowsToWatch.append({"Name": show, "Episode": episode})
+    elif location == "both":
+      if guestShowsWatching[0]["Name"] == "None":
+        guestShowsWatching[0]["Name"] = show
+        guestShowsWatching[0]["Episode"] = episode
+        guestShowsWatching[0]["Status"] = "Watching"
+      else:
+        guestShowsWatching.append({"Name": show, "Episode": episode, "Status": "Watching"})
+      guestShowsToWatch.append({"Name": show, "Episode": episode})
+  else:
+    if location == "watchingNow":
+      if checkLoggedIn()[1]['ShowsWatching'][0]["Name"] == "None":
+        checkLoggedIn()[1]['ShowsWatching'][0]["Name"] = show
+        checkLoggedIn()[1]['ShowsWatching'][0]["Episode"] = episode
+        checkLoggedIn()[1]['ShowsWatching'][0]["Status"] = "Watching"
+      else:
+        checkLoggedIn()[1]['ShowsWatching'].append({"Name": show, "Episode": episode, "Status": "Watching"})
+    elif location == "watchingLater":
+      checkLoggedIn()[1]['ShowsToWatch'].append({"Name": show, "Episode": episode})
+    elif location == "both":
+      if checkLoggedIn()[1]['ShowsWatching'][0]["Name"] == "None":
+        checkLoggedIn()[1]['ShowsWatching'][0]["Name"] = show
+        checkLoggedIn()[1]['ShowsWatching'][0]["Episode"] = episode
+        checkLoggedIn()[1]['ShowsWatching'][0]["Status"] = "Watching"
+      else:
+        checkLoggedIn()[1]['ShowsWatching'].append({"Name": show, "Episode": episode, "Status": "Watching"})
+      checkLoggedIn()[1]['ShowsToWatch'].append({"Name": show, "Episode": episode})
+    json.dump(accounts, open("data.py", "w"), indent=2)
   
 
 def showData(show, item="all"):
@@ -81,18 +161,18 @@ def showData(show, item="all"):
       f"-> SHOW: {show.data['title']}\n"
       f"-> RATING: {str(show.data['rating'])} / 10.0\n"
       f"-> GENRES: {show.data['genres']}\n"
-      f"-> YEARS ACTIVE: {show.data['series years']}\n"
+      f"-> YEAR: {show.data['year']}\n"
       f"-> VOTES: {str(show.data['votes'])}\n"
       f"-> ABOUT: {show.data['plot'][0]}"
-    )
+      )
     elif item == "title":
       return show.data['title']
     elif item == "year":
       return show.data['year']
     elif item == "rating":
-      return str(show.data['rating'])
+      return show.data['rating']
     elif item == "votes":
-      return str(show.data['votes'])
+      return show.data['votes']
     elif item == "genres":
       return show.data['genres']
     elif item == "plot":
@@ -103,7 +183,7 @@ def showData(show, item="all"):
     return "[X] Something went wrong. Please contact [MARK] if you think there is a bug."
 
 def findShow(show):
-  global showsToWatch, showWatching, completedShows, name, assistantName, selectedSearchedShow
+  global accounts, name, assistantName, selectedSearchedShow
   search = ia.search_movie(show)
   if search:
     for i in range(len(search)):
@@ -120,8 +200,8 @@ def findShow(show):
           input(f"[{assistantName}] 😅 < Please enter a valid number.")
           show = input(f"[{assistantName}] 🤔 < Which show would you like to view? (e to exit, otherwise enter the number of the show)")
     showTitle = ia.get_movie(search[show].movieID)
-    heading("SHOW INFO")
-    print(showData(showTitle, "episodes"))
+    heading("Menu > Search > Show Information")
+    print(showData(showTitle))
     selectedSearchedShow = str(showTitle)
     return True
   return False
@@ -135,22 +215,112 @@ def heading(text):
     print("-", end="")
   print()
 
-def create_name():
-  global name
-  input(f"[???] 👋😃 < Hello there! Welcome to this program. I believe this is our first time meeting, I'm {assistantName}!")
-  input(f"[{assistantName}] 😄 < I will be your assistant while you're navigating in this program. Please ask me if you need any help!")
-  input(f"[{assistantName}] 😟 < Oh, I'm sorry! I got caught up introducing myself... What is your name friend?")
-  name = str(input("[...] 🤔 Please enter your name (The name entered will only be used for one thing, which involves time.): "))
+def create_account():
+  global accounts
+  heading("Welcome > Account > Create Account")
+  print("[i] Step 1/3")
+  print("| Let's get started with creating your account.")
+  name = str(input("[i] Enter a username/name you'd like to be called as: "))
   while True:
-    confirm = input(f"[?] 🧐 {name.capitalize()}, so this is what you want me to call you? (y/n)")
+    confirm = str(input(f"[i] Are you sure you want to create an account with the name {name}? (y/n) "))
+    if confirm.strip().lower() == "y":
+      for a in accounts:
+        if a["Name"] == name:
+          input(f"[X] Sorry, that name is already taken. Please try again.")
+          break
+      else:
+        break
+    name = str(input("[i] Enter a username/name you'd like to be called as: "))
+  print("[i] Step 2/3")
+  print("| Now, let's create a password for your account.")
+  password = str(input("[i] Enter a password: "))
+  while True:
+    confirm = str(input(f"[i] Are you sure you want to use the password {password}? (y/n) "))
     if confirm.strip().lower() == "y":
       break
-    name = str(input("[...] 🤔 Please enter your name (The name entered will only be used for one thing, which involves time.): "))
-  name = name.capitalize()
-  json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
-  print(f"[{assistantName}] 😊 < Thank you for your time, {name}! You will now be redirected in a few seconds, please enjoy your time here!")
+    password = str(input("[i] Enter a password: "))
+  print("[i] Step 3/3")
+  print("| Now, let's confirm your information.")
+  print(
+  f"| Username: {name}\n"
+  f"| Password: {password}"
+  )
+  confirm = str(input("[i] Are you sure you want to create your account with the information above? (y/n) "))
+  while True:
+    if confirm.strip().lower() == "y":
+      break
+    create_account()
+    return
+  accounts.append({"Name": name, "Password": password, "Logged In": False, "ShowsToWatch": [], "ShowsWatching": [{"Name": "None", "Episode": 1, "Status": "None"}], "CompletedShows": []})
+  json.dump(accounts, open("data.py", "w"), indent=2)
+  print(f"[i] Your account has been created, you will now be redirected in a few seconds. Thank You!")
   time.sleep(random.randint(1, 3))
-  return name
+
+def login(username, password):
+  global accounts
+  for a in accounts:
+    if a["Name"] == username and a["Password"] == password:
+      return True
+  return False
+
+def welcome():
+  global name
+  heading("Welcome")
+  input(
+  f"| Welcome to {appInfo['Name']}.\n"
+  "| Here, you can keep track of shows you're watching, and basically find information about shows.\n"
+  "| Let's get started."
+  )
+  while True:
+    heading("Welcome > Account")
+    print(
+      "| In order to get the best experience, it is recommended to create an account. It is not required, but without an account, you will have less features.\n"
+      "| If you already have an account, select 'Log in', then continue from there. If not, select 'Create'.\n"
+      "| If you are not sure what to do, select 'Exit', then come back later.\n"
+      "[1] Create\n"
+      "[2] Log in\n"
+      "[3] Continue as Guest\n"
+      "[4] Exit\n"
+      "[5] Why use an account?"
+      )
+    option = input("| Enter Option > ")
+    try:
+      option = int(option)
+    except:
+      input("[X] Please enter a valid input.")
+    if option == 1:
+      create_account()
+    elif option == 2:
+      heading("Welcome > Account > Log In")
+      print("| Welcome back, let's log you in.")
+      user = str(input("[i] Enter your username (case sensitive!): "))
+      password = str(input("[i] Enter your password (case sensitive!): "))
+      if login(user, password):
+        for a in accounts:
+          if a["Name"] == user:
+            a["Logged In"] = True
+            name = a["Name"]
+            print("[✔] Awesome! You're now logged in.")
+            json.dump(accounts, open("data.py", "w"), indent=2)
+            break
+        break
+      else:
+        input("[X] Failure when trying to log in. Check to make sure both your username & password is correct.")
+    elif option == 3:
+      confirm = str(input("[i] Are you sure you want to continue as a guest? Logging into an account is highly recommended. (y/n) "))
+      if confirm.strip().lower() == "y":
+        name = "Guest"
+        print("[i] Continuing as Guest...")
+        break
+    elif option == 4:
+      quit("| See you later, maybe.")
+    elif option == 5:
+      heading("Welcome > Account > Why use an account?")
+      input(
+      "| An account is required in order to keep track of shows you're watching.\n"
+      "| It is not required, but without an account, you will have less features, such as saving.\n"
+      "| If you already have an account, select 'Log in', then continue from there. If not, select 'Create'.\n"
+      )
   
 
 def check_time(name):
@@ -168,32 +338,60 @@ def check_time(name):
     print(f"[👋] Hello, {name}, nice to see you.")
 
 def listOfShows():
-  global showsToWatch
+  global accounts
   sys.stdout.write("[🔄] Fetching list...")
   sys.stdout.flush()
   sys.stdout.write("\r")
   sys.stdout.flush()
-  if not showsToWatch:
-    input("[X] Your list is empty! Go search for some shows to watch, then come here.")
-  else:
-    heading("Menu > Shows to Watch")
-    for title in range(len(showsToWatch)):
-      print(f"[->] {showsToWatch[title]['Name']} | EP: {showsToWatch[title]['Episode']}")
-    print("[i] Total items: " + str(len(showsToWatch)))
-    print("| View [title name (case sensitive)] | Exit [e]")
-    action = str(input(">>> "))
-    if action.strip().lower() == "e":
-      return
+
+  if not checkLoggedIn():
+    if not guestShowsToWatch:
+      input("[X] Your list is empty! Go search for some shows to watch, then come here.")
     else:
-      print("[🔄] Fetching show information...")
-      for title in range(len(showsToWatch)):
-        if showsToWatch[title]['Name'] == action.strip():
-          heading("VIEW SHOW")
-          movie_id = ia.search_movie(action.strip())[0].movieID # Search the show, get the first result, and get the movie ID.
-          selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
-          print(showData(selected_show))
-          return input("Press ENTER to exit. | ")
-      input(f"[{assistantName}] 😅 < That show isn't in your list! Try again!")
+      heading("Menu > Shows to Watch")
+      for title in range(len(guestShowsToWatch)):
+        print(f"[->] {guestShowsToWatch[title]['Name']}")
+      print("[i] Total items: " + str(len(guestShowsToWatch)))
+      print("[i] The ability to remove shows from this list will come in a future update!")
+      print("| View [title name (case sensitive)] | Exit [e]")
+      action = str(input(">>> "))
+      if action.strip().lower() == "e":
+        return
+      else:
+        print("[🔄] Fetching show information...")
+        for title in range(len(guestShowsToWatch)):
+          if guestShowsToWatch[title]['Name'] == action.strip():
+            heading("VIEW SHOW")
+            movie_id = ia.search_movie(action.strip())[0].movieID # Search the show, get the first result, and get the movie ID.
+            selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+            print(showData(selected_show))
+            input("Press ENTER to exit. | ")
+        else:
+          input(f"[{assistantName}] 😅 < That show isn't in your list! Try again!")
+  else:
+    if not checkLoggedIn()[1]['ShowsToWatch']:
+      input("[X] Your list is empty! Go search for some shows to watch, then come here.")
+    else:
+      heading("Menu > Shows to Watch")
+      for title in range(len(checkLoggedIn()[1]['ShowsToWatch'])):
+        print(f"[->] {checkLoggedIn()[1]['ShowsToWatch'][title]['Name']}")
+      print("[i] Total items: " + str(len(checkLoggedIn()[1]['ShowsToWatch'])))
+      print("[i] The ability to remove shows from this list will come in a future update!")
+      print("| View [title name (case sensitive)] | Exit [e]")
+      action = str(input(">>> "))
+      if action.strip().lower() == "e":
+        return
+      else:
+        print("[🔄] Fetching show information...")
+        for title in range(len(checkLoggedIn()[1]['ShowsToWatch'])):
+          if checkLoggedIn()[1]['ShowsToWatch'][title]['Name'] == action.strip():
+            heading("VIEW SHOW")
+            movie_id = ia.search_movie(action.strip())[0].movieID # Search the show, get the first result, and get the movie ID.
+            selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+            print(showData(selected_show))
+            input("Press ENTER to exit. | ")
+        else:
+          input(f"[{assistantName}] 😅 < That show isn't in your list! Try again!")
       
 
 def about():
@@ -208,58 +406,49 @@ def about():
   input("Press ENTER to exit. | ")
 
 def watching():
-  global showWatching
-  heading("Menu > Currently Watching")
-  for i in range(len(showWatching)):
-    print(f"| Show: {showWatching[i]['Name']} | EP: {str(showWatching[i]['Episode'])} | Status: {str(showWatching[i]['Status'])}")
-  print("[i] Total items: " + str(len(showWatching)))
-  print("| Change [c] | Remove [r] | Move to Completed [m] | Exit [e]")
-  action = str(input(">>> "))
-  if action == "c":
-    change = str(input(f"[{assistantName}] 🤔 < Change what? (name/episode) "))
-    if change.strip().lower() == "name":
-      loopThroughShows()
-      edit = input(f"[{assistantName}] 🤔 < Which show do you want to edit? ")
-      try:
-        edit = int(edit)
-      except ValueError:
-        input("[X] Invalid input, please try again!")
-      if edit in range(0, len(showWatching)):
-        title = str(input(f"[{assistantName}] 🧐 < What is the name of the show you're watching? ('e' to exit) "))
-        if title.strip().lower() == "e":
-          return
-        if checkShow(title):
-          return
-        while True:
-          update = str(input(f"[{assistantName}] 🙂 < You're currently watching '{title}'? (y/n) "))
-          if update.strip().lower() == "y":
-            break
+  global accounts
+
+  if not checkLoggedIn():
+    heading("Menu > Currently Watching")
+    for i in range(len(guestShowsWatching)):
+      print(f"[{i}] | Show: {guestShowsWatching[i]['Name']} | EP: {guestShowsWatching[i]['Episode']} | Status: {guestShowsWatching[i]['Status']}")
+    print("[i] Total items: " + str(len(guestShowsWatching)))
+    print("| Change [c] | Remove [r] | Move to Completed [m] | Exit [e]")
+    action = str(input(">>> "))
+    if action == "c":
+      change = str(input(f"[{assistantName}] 🤔 < Change what? (name/episode) "))
+      if change.strip().lower() == "name":
+        loopThroughShows()
+        edit = input(f"[{assistantName}] 🤔 < Which show do you want to edit? ")
+        try:
+          edit = int(edit)
+        except ValueError:
+          input("[X] Invalid input, please try again!")
+        if edit in range(0, len(guestShowsWatching)):
           title = str(input(f"[{assistantName}] 🧐 < What is the name of the show you're watching? ('e' to exit) "))
           if title.strip().lower() == "e":
             return
-        showWatching[edit]["Name"] = title
-      else:
-        return input("[X] Invalid number range.")
-      input("[✔] Process complete.")
-    elif change.strip().lower() == "episode":
-      loopThroughShows()
-      edit = input(f"[{assistantName}] 🤔 < Which show do you want to edit? ")
-      try:
-        edit = int(edit)
-      except ValueError:
-        input("[X] Invalid input, please try again!")
-      if edit in range(0, len(showWatching)):
-        episode = input(f"[{assistantName}] 🙂 < Please enter the episode number ('e' to exit). ")
-        if episode.strip().lower() == "e":
-          return
+          if checkShow(title, "watchingNow"):
+            return
+          while True:
+            update = str(input(f"[{assistantName}] 🙂 < You're currently watching '{title}'? (y/n) "))
+            if update.strip().lower() == "y":
+              break
+            title = str(input(f"[{assistantName}] 🧐 < What is the name of the show you're watching? ('e' to exit) "))
+            if title.strip().lower() == "e":
+              return
+          guestShowsWatching[edit]["Name"] = title
+        else:
+          return input("[X] Invalid number range.")
+        print("[✔] Process complete.")
+      elif change.strip().lower() == "episode":
+        loopThroughShows()
+        edit = input(f"[{assistantName}] 🤔 < Which show do you want to edit? ")
         try:
-          episode = int(episode)
+          edit = int(edit)
         except ValueError:
           input("[X] Invalid input, please try again!")
-        while True:
-          confirm = str(input(f"[{assistantName}] 🤔 < You're currently on episode {episode} on '{showWatching[edit]['Name']}'? (y/n)"))
-          if confirm.strip().lower() == "y":
-            break
+        if edit in range(0, len(guestShowsWatching)):
           episode = input(f"[{assistantName}] 🙂 < Please enter the episode number ('e' to exit). ")
           if episode.strip().lower() == "e":
             return
@@ -267,63 +456,180 @@ def watching():
             episode = int(episode)
           except ValueError:
             input("[X] Invalid input, please try again!")
-        showWatching[edit]["Episode"] = episode
-        if showWatching[edit]["Episode"] == showData(ia.search_movie(showWatching[edit]["Name"])[0], "episodes"):
-          showWatching[edit]["Status"] = "Complete"
-          return input(f"[✔] You've completed '{showWatching[edit]['Name']}'! Its status is now set to 'complete'.")
-      else:
-        return input("[X] Invalid number range.")
-      input("[✔] Process complete.")
-  elif action == "r":
-    heading("Menu > Currently Watching > Remove Show")
-    loopThroughShows()
-    remove = input(f"[{assistantName}] 🤔 < Which show do you want to remove? ")
-    try:
-      remove = int(remove)
-    except ValueError:
-      input("[X] Invalid input, please try again!")
-    confirm = str(input(f"[{assistantName}] 🤔 < Are you sure you want to remove {showWatching[remove]['Name']}? (y/n) "))
-    if confirm.strip().lower() == "y":
-      showWatching[remove]["Name"], showWatching[remove]["Episode"], showWatching[remove]["Status"] = "None", 1, "None"
-      input("[✔] Removed show.")
-    else:
-      return
-  elif action == "m":
-    heading("Menu > Currently Watching > Move Show")
-    loopThroughShows()
-    move = input(f"[{assistantName}] 🤔 < Which show do you want to move? (e to exit): ")
-    if move.strip().lower() == "e":
-      return
-    else:
+          while True:
+            confirm = str(input(f"[{assistantName}] 🤔 < You're currently on episode {episode} on '{guestShowsWatching[edit]['Name']}'? (y/n)"))
+            if confirm.strip().lower() == "y":
+              break
+            episode = input(f"[{assistantName}] 🙂 < Please enter the episode number ('e' to exit). ")
+            if episode.strip().lower() == "e":
+              return
+            try:
+              episode = int(episode)
+            except ValueError:
+              input("[X] Invalid input, please try again!")
+          guestShowsWatching[edit]["Episode"] = episode
+          if guestShowsWatching[edit]["Episode"] == showData(ia.search_movie(guestShowsWatching[edit]["Name"])[0], "episodes"):
+            guestShowsWatching[edit]["Status"] = "Complete"
+            return input(f"[✔] You've completed '{guestShowsWatching[edit]['Name']}'! Its status is now set to 'complete'.")
+        else:
+          return input("[X] Invalid number range.")
+        print("[✔] Process complete.")
+    elif action == "r":
+      heading("Menu > Currently Watching > Remove Show")
+      loopThroughShows()
+      remove = input(f"[{assistantName}] 🤔 < Which show do you want to remove? ")
       try:
-        move = int(move)
+        remove = int(remove)
       except ValueError:
         input("[X] Invalid input, please try again!")
-      if showWatching[move]["Status"] == "Watching":
-        confirm = str(input(f"[{assistantName}] 🤔 < You aren't completed with '{showWatching[move]['Name']}' yet, do you still want to move it to your list of completed shows? (y/n) "))
-        if confirm.strip().lower() == "y":
-          completedShows.append(showWatching[move]["Name"])
-          showWatching.pop(move)
-          input(f"[✔] Nice, you finished a show!")
-      elif showWatching[move]["Status"] == "Complete":
-        confirm = str(input(f"[{assistantName}] 🧐 < You've completed '{showWatching[move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
-        if confirm.strip().lower() == "y":
-          completedShows.append(showWatching[move]["Name"])
-          showWatching.pop(move)
-          input(f"[✔] Nice, you finished a show!")
+      confirm = str(input(f"[{assistantName}] 🤔 < Are you sure you want to remove '{guestShowsWatching[remove]['Name']}'? (y/n) "))
+      if confirm.strip().lower() == "y":
+        guestShowsWatching.pop(remove)
+        input("[✔] Removed show.")
+      else:
+        return
+    elif action == "m":
+      heading("Menu > Currently Watching > Move Show")
+      loopThroughShows()
+      move = input(f"[{assistantName}] 🤔 < Which show do you want to move? (e to exit): ")
+      if move.strip().lower() == "e":
+        return
+      else:
+        try:
+          move = int(move)
+        except ValueError:
+          input("[X] Invalid input, please try again!")
+        if guestShowsWatching[move]['Status'] == "Watching":
+          confirm = str(input(f"[{assistantName}] 🤔 < You aren't completed with '{guestShowsWatching[move]['Name']}' yet, do you still want to move it to your list of completed shows? (y/n) "))
+          if confirm.strip().lower() == "y":
+            guestCompletedShows.append(guestShowsWatching[move]['Name'])
+            guestShowsWatching.pop(move)
+            print("[✔] Nice, you finished a show!")
+        elif guestShowsWatching[move]["Status"] == "Complete":
+          confirm = str(input(f"[{assistantName}] 🧐 < You've completed '{guestShowsWatching[move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
+          if confirm.strip().lower() == "y":
+            guestCompletedShows.append(guestShowsWatching[move]['Name'])
+            guestShowsWatching.pop(move)
+            print("[✔] Nice, you finished a show!")
+    else:
+      return
   else:
-    return
-  json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
+    heading("Menu > Currently Watching")
+    for i in range(len(checkLoggedIn()[1]['ShowsWatching'])):
+      print(f"[{i}] | Show: {checkLoggedIn()[1]['ShowsWatching'][i]['Name']} | EP: {checkLoggedIn()[1]['ShowsWatching'][i]['Episode']} | Status: {checkLoggedIn()[1]['ShowsWatching'][i]['Status']}")
+    print("[i] Total items: " + str(len(checkLoggedIn()[1]['ShowsWatching'])))
+    print("| Change [c] | Remove [r] | Move to Completed [m] | Exit [e]")
+    action = str(input(">>> "))
+    if action == "c":
+      change = str(input(f"[{assistantName}] 🤔 < Change what? (name/episode) "))
+      if change.strip().lower() == "name":
+        loopThroughShows()
+        edit = input(f"[{assistantName}] 🤔 < Which show do you want to edit? ")
+        try:
+          edit = int(edit)
+        except ValueError:
+          input("[X] Invalid input, please try again!")
+        if edit in range(0, len(checkLoggedIn()[1]['ShowsWatching'])):
+          title = str(input(f"[{assistantName}] 🧐 < What is the name of the show you're watching? ('e' to exit) "))
+          if title.strip().lower() == "e":
+            return
+          if checkShow(title, "watchingNow"):
+            return
+          while True:
+            update = str(input(f"[{assistantName}] 🙂 < You're currently watching '{title}'? (y/n) "))
+            if update.strip().lower() == "y":
+              break
+            title = str(input(f"[{assistantName}] 🧐 < What is the name of the show you're watching? ('e' to exit) "))
+            if title.strip().lower() == "e":
+              return
+          checkLoggedIn()[1]['ShowsWatching'][edit]["Name"] = title
+        else:
+          return input("[X] Invalid number range.")
+        print("[✔] Process complete.")
+      elif change.strip().lower() == "episode":
+        loopThroughShows()
+        edit = input(f"[{assistantName}] 🤔 < Which show do you want to edit? ")
+        try:
+          edit = int(edit)
+        except ValueError:
+          input("[X] Invalid input, please try again!")
+        if edit in range(0, len(checkLoggedIn()[1]['ShowsWatching'])):
+          episode = input(f"[{assistantName}] 🙂 < Please enter the episode number ('e' to exit). ")
+          if episode.strip().lower() == "e":
+            return
+          try:
+            episode = int(episode)
+          except ValueError:
+            input("[X] Invalid input, please try again!")
+          while True:
+            confirm = str(input(f"[{assistantName}] 🤔 < You're currently on episode {episode} on '{checkLoggedIn()[1]['ShowsWatching'][edit]['Name']}'? (y/n)"))
+            if confirm.strip().lower() == "y":
+              break
+            episode = input(f"[{assistantName}] 🙂 < Please enter the episode number ('e' to exit). ")
+            if episode.strip().lower() == "e":
+              return
+            try:
+              episode = int(episode)
+            except ValueError:
+              input("[X] Invalid input, please try again!")
+          checkLoggedIn()[1]['ShowsWatching'][edit]["Episode"] = episode
+          if checkLoggedIn()[1]['ShowsWatching'][edit]["Episode"] == showData(ia.search_movie(checkLoggedIn()[1]['ShowsWatching'][edit]["Name"])[0], "episodes"):
+            checkLoggedIn()[1]['ShowsWatching'][edit]["Status"] = "Complete"
+            return input(f"[✔] You've completed '{checkLoggedIn()[1]['ShowsWatching'][edit]['Name']}'! Its status is now set to 'complete'.")
+        else:
+          return input("[X] Invalid number range.")
+        print("[✔] Process complete.")
+    elif action == "r":
+      heading("Menu > Currently Watching > Remove Show")
+      loopThroughShows()
+      remove = input(f"[{assistantName}] 🤔 < Which show do you want to remove? ")
+      try:
+        remove = int(remove)
+      except ValueError:
+        input("[X] Invalid input, please try again!")
+      confirm = str(input(f"[{assistantName}] 🤔 < Are you sure you want to remove '{checkLoggedIn()[1]['ShowsWatching'][remove]['Name']}'? (y/n) "))
+      if confirm.strip().lower() == "y":
+        checkLoggedIn()[1]['ShowsWatching'].pop(remove)
+        print("[✔] Show removed.")
+      else:
+        return
+    elif action == "m":
+      heading("Menu > Currently Watching > Move Show")
+      loopThroughShows()
+      move = input(f"[{assistantName}] 🤔 < Which show do you want to move? (e to exit): ")
+      if move.strip().lower() == "e":
+        return
+      else:
+        try:
+          move = int(move)
+        except ValueError:
+          input("[X] Invalid input, please try again!")
+        if checkLoggedIn()[1]['ShowsWatching'][move]['Status'] == "Watching":
+          confirm = str(input(f"[{assistantName}] 🤔 < You aren't completed with '{checkLoggedIn()[1]['ShowsWatching'][move]['Name']}' yet, do you still want to move it to your list of completed shows? (y/n) "))
+          if confirm.strip().lower() == "y":
+            checkLoggedIn()[1]['CompletedShows'].append(checkLoggedIn()[1]['ShowsWatching'][move]['Name'])
+            checkLoggedIn()[1]['ShowsWatching'].pop(move)
+            print("[✔] Nice, you finished a show!")
+        elif checkLoggedIn()[1]['ShowsWatching'][move]["Status"] == "Complete":
+          confirm = str(input(f"[{assistantName}] 🧐 < You've completed '{checkLoggedIn()[1]['ShowsWatching'][move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
+          if confirm.strip().lower() == "y":
+            checkLoggedIn()[1]['CompletedShows'].append(checkLoggedIn()[1]['ShowsWatching'][move]['Name'])
+            checkLoggedIn()[1]['ShowsWatching'].pop(move)
+            print("[✔] Nice, you finished a show!")
+    else:
+      return
+    json.dump(accounts, open("data.py", "w"), indent=2)
     
 
 def userSettings():
-  global name, showsToWatch, showWatching, completedShows
+  global name, accounts
   heading("Menu > Settings")
   print(
     f"[{assistantName}] 🤔 What are you looking to change, {name}?\n"
-    "[1] Change name.\n"
-    "[2] Erase Data.\n"
-    "[3] Exit."
+    "[1] Change username/name.\n"
+    "[2] Delete Account.\n"
+    "[3] Sign Out.\n"
+    "[4] Exit." if name != "Guest" else "[1] Exit Guest Mode.\n[2] Exit."
   )
   settings = input(">>> ")
   try:
@@ -331,49 +637,73 @@ def userSettings():
   except ValueError:
     input("[X] Invalid input, please try again!")
   if settings == 1:
-    heading("Menu > Settings > Change Name")
-    input(f"[{assistantName}] 🙂 < Oh? You want me to call you something else? Sure! What'll it be?")
-    name = str(input("> Enter your new name: "))
-    while True:
-      confirm = input(f"[?] 🧐 {name.capitalize()}, so this is what you want me to call you? (y/n)")
+    if name == "Guest":
+      # Ask if they want to leave guest mode
+      print("[!] When in Guest Mode, your data will not be saved. Make sure to write any shows that you have on Guest Mode somewhere else so you do not lose them.")
+      confirm = str(input(f"[{assistantName}] 🤔 < You're currently in guest mode, do you want to leave? (y/n) "))
       if confirm.strip().lower() == "y":
-        break
-      name = str(input("> Enter your new name: "))
-    name = name.capitalize()
-    json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
-    input(f"[{assistantName}] 😁 < Great, process complete, hello {name}!")
+        print("| Leaving Guest Mode...")
+        welcome()
+    else:
+      heading("Menu > Settings > Change Username")
+      input(f"[{assistantName}] 🙂 < Oh? You want me to call you something else? Sure! What'll it be?")
+      name = str(input("> Enter your new username/name: "))
+      while True:
+        confirm = input(f"[?] 🧐 {name}, so this is what you want to change your username/name to? (y/n)")
+        if confirm.strip().lower() == "y":
+          break
+        name = str(input("> Enter your new username/name: "))
+      checkLoggedIn()[1]["Name"] = name
+      json.dump(accounts, open("data.py", "w"), indent=2)
+      input(f"[{assistantName}] 😁 < Great, your username is now '{checkLoggedIn()[1]['Name']}'!")
 
 
   elif settings == 2:
-    heading("Menu > Settings > Erase Data")
-    input(f"[{assistantName}] 😨 < Wha- You want to erase your data?! Why?!")
-    input(f"[{assistantName}] 😔 < No no, I'm sorry. This must be something you're deciding on your own.")
-    input(f"[{assistantName}] 😥 < You do know what this means right? All the shows you added will be GONE, for GOOD! I will also not remember you, {name}...")
-    input(f"[{assistantName}] 😟 < Though, if you've come here, I'm sure you know. However, this is your choice, so I will not interfere with anything.")
-    input(f"[{assistantName}] 😕 < So... what'll it be, {name}?")
-    erase = input(
-      "[!] By erasing your data, your name, list of shows, and what your currently watching will be wiped. Are you sure you want to continue?\n"
-      "[1] Erase.\n"
-      "[2] On second thought...\n"
-      ">>> "
-      )
-    try:
-      erase = int(erase)
-    except ValueError:
-      input("[X] Invalid input, please try again!")
-    if erase == 1:
-      confirm = str(input("[!!!] Final warning: Are you positive that you want to erase ALL data completely? This cannot be undone. (y/n)"))
+    if name == "Guest":
+      return
+    else:
+      heading("Menu > Settings > Delete Account")
+      input(f"[{assistantName}] 😨 < Wha- You want to delete your account?! Why?!")
+      input(f"[{assistantName}] 😔 < No no, I'm sorry. This must be something you're deciding on your own.")
+      input(f"[{assistantName}] 😥 < You do know what this means right? All the shows you added will be GONE, for GOOD! I will also not remember you, {name}...")
+      input(f"[{assistantName}] 😟 < Though, if you've come here, I'm sure you know. However, this is your choice, so I will not interfere with anything.")
+      input(f"[{assistantName}] 😕 < So... what'll it be, {name}?")
+      erase = input(
+        "[!] By deleting your account, your name, list of shows, what your currently watching, and completed shows will be wiped. Are you sure you want to continue?\n"
+        "[1] Erase.\n"
+        "[2] On second thought...\n"
+        ">>> "
+        )
+      try:
+        erase = int(erase)
+      except ValueError:
+        input("[X] Invalid input, please try again!")
+      if erase == 1:
+        confirm = str(input("[!!!] Final warning: Are you positive that you want to erase ALL data completely? This cannot be undone. (y/n)"))
+        if confirm.strip().lower() == "y":
+          input(f"[{assistantName}] 😔 < Well... it was nice meeting you, {name}. I guess this is where we part ways.")
+          input(f"[{assistantName}] 😁 < Thank you for using Show List, goodbye.")
+          accounts.remove(checkLoggedIn()[1])
+          print("[✔] Data erased successfully.")
+          advance = str(input("[.] In order to continue using this program, you'll need to create a new account, or use Guest Mode. If you want to later, type 'exit', if you want to now, type 'new'. (new/exit) "))
+          if advance.strip().lower() == "new":
+            welcome()
+          else:
+            sys.exit("[✔] Closed.")
+  elif settings == 3:
+    if name != "Guest":
+      heading("Menu > Settings > Sign Out")
+      confirm = str(input(f"[{assistantName}] 😕 < Are you sure you want to sign out? (y/n)"))
       if confirm.strip().lower() == "y":
-        input(f"[{assistantName}] 😔 < Well... it was nice meeting you, {name}. I guess this is where we part ways.")
-        input(f"[{assistantName}] 😁 < Thank you for using Show List, goodbye.")
-        name, showsToWatch, showWatching, completedShows = "None", [], [{"Name": "None", "Episode": 1, "Status": "None"}], []
-        json.dump((name, showsToWatch, showWatching, completedShows), open("data.py", "w"), indent=2)
-        input("[✔] Data erased successfully.")
-        advance = str(input("[.] In order to continue using this program, you'll need to come up with a new name. If you want to later, type 'exit', if you want to now, type 'new'. (new/exit) "))
-        if advance.strip().lower() == "new":
-          create_name()
-        else:
-          sys.exit("[✔] Closed.")
+        for a in accounts:
+          if a["Logged In"]:
+            a["Logged In"] = False
+            break
+        print("[✔] Successfully signed out.")
+        name = "Guest"
+        json.dump(accounts, open("data.py", "w"), indent=2)
+        welcome()
+
 
 def searchShows():
   global selectedSearchedShow
@@ -406,7 +736,7 @@ def searchShows():
         saveLocation = "both"
       addNewShow(selectedSearchedShow, episode, saveLocation)
       selectedSearchedShow = None
-      print(f"[{assistantName}] 😄 < All done! >>")
+      print("[✔] Process complete.")
     elif action.strip().lower() == "s":
       searchShows()
       return
@@ -424,16 +754,15 @@ def cloverGreeting():
   return random.choice(greetings)
 
 def main():
-  global showWatching, name, showsToWatch, completedShows, selectedSearchedShow
+  global name, selectedSearchedShow, accounts
 
   try:
-    name, showsToWatch, showWatching, completedShows = json.load(open("data.py", "r"))
+    accounts = json.load(open("data.py", "r"))
   except:
     print("[.] Some data didn't load.")
 
-  if name == "None":
-    create_name()
-  heading("Menu")
+  if not checkLoggedIn():
+    welcome()
   check_time(name)
   while True:
     print(
@@ -442,7 +771,7 @@ def main():
       "[1] View your list of upcoming shows.\n"
       "[2] View what you're currently watching.\n"
       "[3] View completed shows.\n"
-      "[4] Search Show. [NEW!]\n"
+      "[4] Search Show.\n"
       "[5] About the Program.\n"
       "[6] Settings.\n"
       "[7] Close.\n"
@@ -474,7 +803,12 @@ def main():
       userSettings()
     #case 7:
     elif action == 7:
-      sys.exit("[✔] Closed.")
+      if name == "Guest":
+        warning = str(input("[!] You're in Guest Mode, and by exiting your data will be lost. Be sure to write down your shows somewhere else before exiting. Otherwise, do you really want to exit? (y/n)"))
+        if warning.strip().lower() == "y":
+          sys.exit("[✔] Closed.")
+      else:
+        sys.exit("[✔] Closed.")
 
 
 

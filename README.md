@@ -13,12 +13,18 @@ This is a console-based program designed to sort out and hold your list of shows
 
 ## Program Version
 
-This program is currently in version 1.2. More updates will come soon for features, bug fixes, and/or improvements.
+This program is currently in version 1.3. More updates will come soon for features, bug fixes, and/or improvements.
 
 ## Changelog
 
 The following is the changes this program went through. Take a look!
 
+> **Version 1.3** | 11.17.2021
+> - Added an account system! Now you can manage many shows between other users without messing anything up.
+> - Guest Mode. This feature is just the normal program but it doesn't save data.
+> - Improvements were made.
+> - Looked high and low for sneaky bugs, they were removed.
+>
 > **Version 1.2** | 11.12.2021
 > - Added a piece of information to shows called 'Status', allowing you to see whether if you're watching a show, or if completed with it.
 > - Made some minor changes.
