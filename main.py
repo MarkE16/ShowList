@@ -3,7 +3,7 @@ import json, sys, datetime, time, random, imdb
 appInfo = {
   "Name": "Show List",
   "Creator": "Mark E",
-  "Version": "1.3",
+  "Version": "1.3.1",
   "Description": "A program that allows you to keep track of shows you're watching."
 }
 
@@ -78,12 +78,12 @@ def checkShow(show, location="both"):
         if guestShowsWatching[i]["Name"] == show:
           input(f"[{assistantName}] 😅 < Haha, you're already watching watching that show! Try again!")
           return True
-  elif location == "watchingNow":
+  elif location == "watchingnow":
     for i in range(len(guestShowsWatching)):
       if guestShowsWatching[i]["Name"] == show:
         input(f"[{assistantName}] 😅 < Haha, you're already watching that show!")
         return True
-  elif location == "watchingLater":
+  elif location == "watchinglater":
     for i in range(len(guestShowsToWatch)):
       if guestShowsToWatch[i]["Name"] == show:
         input(f"[{assistantName}] 😅 < Haha, you're already planning on watching that show!")
@@ -99,12 +99,12 @@ def checkShow(show, location="both"):
         if checkLoggedIn()[1]['ShowsWatching'][i]["Name"] == show:
           input(f"[{assistantName}] 😅 < Haha, you're already watching watching that show! Try again!")
           return True
-    elif location == "watchingNow":
+    elif location == "watchingnow":
       for i in range(len(checkLoggedIn()[1]['ShowsWatching'])):
         if checkLoggedIn()[1]['ShowsWatching'][i]["Name"] == show:
           input(f"[{assistantName}] 😅 < Haha, you're already watching that show!")
           return True
-    elif location == "watchingLater":
+    elif location == "watchinglater":
       for i in range(len(checkLoggedIn()[1]['ShowsToWatch'])):
         if checkLoggedIn()[1]['ShowsToWatch'][i]["Name"] == show:
           input(f"[{assistantName}] 😅 < Haha, you're already planning on watching that show!")
@@ -157,14 +157,40 @@ def addNewShow(show, episode: int, location):
 def showData(show, item="all"):
   try:
     if item == "all":
-      return (
-      f"-> SHOW: {show.data['title']}\n"
-      f"-> RATING: {str(show.data['rating'])} / 10.0\n"
-      f"-> GENRES: {show.data['genres']}\n"
-      f"-> YEAR: {show.data['year']}\n"
-      f"-> VOTES: {str(show.data['votes'])}\n"
-      f"-> ABOUT: {show.data['plot'][0]}"
-      )
+      if not checkLoggedIn():
+        return (
+        f"-> SHOW: {show.data['title']}\n"
+        f"-> RATING: {str(show.data['rating'])} / 10.0\n"
+        f"-> GENRES: {show.data['genres']}\n"
+        f"-> YEAR: {show.data['year']}\n"
+        f"-> VOTES: {str(show.data['votes'])}\n"
+        f"-> ABOUT: {show.data['plot'][0]}\n"
+        f"[{('✔' if show.data['title'] in [title['Name'] for title in guestShowsWatching] else '❌')}] Watching Now | [{('✔' if show.data['title'] in [title['Name'] for title in guestShowsToWatch] else '❌')}] Planning to Watch | [{('✔' if show.data['title'] in guestCompletedShows else '❌')}] Completed\n" if guestShowsToWatch and guestCompletedShows and guestShowsWatching else 
+        f"-> SHOW: {show.data['title']}\n"
+        f"-> RATING: {str(show.data['rating'])} / 10.0\n"
+        f"-> GENRES: {show.data['genres']}\n"
+        f"-> YEAR: {show.data['year']}\n"
+        f"-> VOTES: {str(show.data['votes'])}\n"
+        f"-> ABOUT: {show.data['plot'][0]}\n"
+        "[!] Failed to get certain data, come back when all lists are loaded."
+        )
+      else:
+        return (
+        f"-> SHOW: {show.data['title']}\n"
+        f"-> RATING: {str(show.data['rating'])} / 10.0\n"
+        f"-> GENRES: {show.data['genres']}\n"
+        f"-> YEAR: {show.data['year']}\n"
+        f"-> VOTES: {str(show.data['votes'])}\n"
+        f"-> ABOUT: {show.data['plot'][0]}\n"
+        f"[{('✔' if show.data['title'] in [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']] else '❌')}] Watching Now | [{('✔' if show.data['title'] in [title['Name'] for title in checkLoggedIn()[1]['ShowsToWatch']] else '❌')}] Planning to Watch | [{('✔' if show.data['title'] in checkLoggedIn()[1]['CompletedShows'] else '❌')}] Completed\n" if checkLoggedIn()[1]["ShowsToWatch"] and checkLoggedIn()[1]["CompletedShows"] and checkLoggedIn()[1]["ShowsWatching"] else 
+        f"-> SHOW: {show.data['title']}\n"
+        f"-> RATING: {str(show.data['rating'])} / 10.0\n"
+        f"-> GENRES: {show.data['genres']}\n"
+        f"-> YEAR: {show.data['year']}\n"
+        f"-> VOTES: {str(show.data['votes'])}\n"
+        f"-> ABOUT: {show.data['plot'][0]}\n"
+        "[!] Failed to get certain data, come back when all lists are loaded."
+        )
     elif item == "title":
       return show.data['title']
     elif item == "year":
@@ -220,7 +246,9 @@ def create_account():
   heading("Welcome > Account > Create Account")
   print("[i] Step 1/3")
   print("| Let's get started with creating your account.")
-  name = str(input("[i] Enter a username/name you'd like to be called as: "))
+  name = str(input("[i] Enter a username/name you'd like to be called as (back to exit): "))
+  if name == "back":
+    return
   while True:
     confirm = str(input(f"[i] Are you sure you want to create an account with the name {name}? (y/n) "))
     if confirm.strip().lower() == "y":
@@ -230,15 +258,21 @@ def create_account():
           break
       else:
         break
-    name = str(input("[i] Enter a username/name you'd like to be called as: "))
+    name = str(input("[i] Enter a username/name you'd like to be called as (back to exit): "))
+    if name == "back":
+      return
   print("[i] Step 2/3")
   print("| Now, let's create a password for your account.")
-  password = str(input("[i] Enter a password: "))
+  password = str(input("[i] Enter a password (back to exit): "))
+  if password == "back":
+    return
   while True:
     confirm = str(input(f"[i] Are you sure you want to use the password {password}? (y/n) "))
     if confirm.strip().lower() == "y":
       break
-    password = str(input("[i] Enter a password: "))
+    password = str(input("[i] Enter a password (back to exit): "))
+    if password == "back":
+      return
   print("[i] Step 3/3")
   print("| Now, let's confirm your information.")
   print(
@@ -350,48 +384,50 @@ def listOfShows():
     else:
       heading("Menu > Shows to Watch")
       for title in range(len(guestShowsToWatch)):
-        print(f"[->] {guestShowsToWatch[title]['Name']}")
+        print(f"[{title}] {guestShowsToWatch[title]['Name']}")
       print("[i] Total items: " + str(len(guestShowsToWatch)))
       print("[i] The ability to remove shows from this list will come in a future update!")
-      print("| View [title name (case sensitive)] | Exit [e]")
-      action = str(input(">>> "))
+      print("| View [# next to title] | Exit [e]")
+      action = input(">>> ")
       if action.strip().lower() == "e":
         return
+      try:
+        action = int(action)
+      except ValueError:
+        input("[X] Please enter a valid input.")
+      if action in range(0, len(guestShowsToWatch)):
+        heading("Menu > Shows to Watch > View Show")
+        movie_id = ia.search_movie(guestShowsToWatch[action]['Name'].strip())[0].movieID # Search the show, get the first result, and get the movie ID.
+        selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+        print(showData(selected_show))
+        return input("Press ENTER to exit. | ")
       else:
-        print("[🔄] Fetching show information...")
-        for title in range(len(guestShowsToWatch)):
-          if guestShowsToWatch[title]['Name'] == action.strip():
-            heading("VIEW SHOW")
-            movie_id = ia.search_movie(action.strip())[0].movieID # Search the show, get the first result, and get the movie ID.
-            selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
-            print(showData(selected_show))
-            input("Press ENTER to exit. | ")
-        else:
-          input(f"[{assistantName}] 😅 < That show isn't in your list! Try again!")
+        input("[X] Please enter a valid input.")
   else:
     if not checkLoggedIn()[1]['ShowsToWatch']:
       input("[X] Your list is empty! Go search for some shows to watch, then come here.")
     else:
       heading("Menu > Shows to Watch")
       for title in range(len(checkLoggedIn()[1]['ShowsToWatch'])):
-        print(f"[->] {checkLoggedIn()[1]['ShowsToWatch'][title]['Name']}")
+        print(f"[{title}] {checkLoggedIn()[1]['ShowsToWatch'][title]['Name']}")
       print("[i] Total items: " + str(len(checkLoggedIn()[1]['ShowsToWatch'])))
       print("[i] The ability to remove shows from this list will come in a future update!")
-      print("| View [title name (case sensitive)] | Exit [e]")
-      action = str(input(">>> "))
+      print("| View [# next to title] | Exit [e]")
+      action = input(">>> ")
       if action.strip().lower() == "e":
         return
+      try:
+        action = int(action)
+      except ValueError:
+        input("[X] Please enter a valid input.")
+      if action in range(0, len(checkLoggedIn()[1]['ShowsToWatch'])):
+        heading("Menu > Shows to Watch > View Show")
+        movie_id = ia.search_movie(checkLoggedIn()[1]['ShowsToWatch'][action]['Name'].strip())[0].movieID # Search the show, get the first result, and get the movie ID.
+        selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+        print(showData(selected_show))
+        return input("Press ENTER to exit. | ")
       else:
-        print("[🔄] Fetching show information...")
-        for title in range(len(checkLoggedIn()[1]['ShowsToWatch'])):
-          if checkLoggedIn()[1]['ShowsToWatch'][title]['Name'] == action.strip():
-            heading("VIEW SHOW")
-            movie_id = ia.search_movie(action.strip())[0].movieID # Search the show, get the first result, and get the movie ID.
-            selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
-            print(showData(selected_show))
-            input("Press ENTER to exit. | ")
-        else:
-          input(f"[{assistantName}] 😅 < That show isn't in your list! Try again!")
+        input("[X] Please enter a valid input.")
       
 
 def about():
@@ -413,7 +449,7 @@ def watching():
     for i in range(len(guestShowsWatching)):
       print(f"[{i}] | Show: {guestShowsWatching[i]['Name']} | EP: {guestShowsWatching[i]['Episode']} | Status: {guestShowsWatching[i]['Status']}")
     print("[i] Total items: " + str(len(guestShowsWatching)))
-    print("| Change [c] | Remove [r] | Move to Completed [m] | Exit [e]")
+    print("| Change [c] | Remove [r] | Move to Completed [m] | View [v] | Exit [e]")
     action = str(input(">>> "))
     if action == "c":
       change = str(input(f"[{assistantName}] 🤔 < Change what? (name/episode) "))
@@ -511,6 +547,21 @@ def watching():
             guestCompletedShows.append(guestShowsWatching[move]['Name'])
             guestShowsWatching.pop(move)
             print("[✔] Nice, you finished a show!")
+    elif action == "v":
+      heading("Menu > Currently Watching > View Show")
+      loopThroughShows()
+      view = input(f"[{assistantName}] 🤔 < Which show do you want to view? ")
+      try:
+        view = int(view)
+      except ValueError:
+        input("[X] Invalid input, please try again!")
+      if view in range(0, len(guestShowsWatching)):
+        movie_id = ia.search_movie(guestShowsWatching[view]['Name'].strip())[0].movieID # Search the show, get the first result, and get the movie ID.
+        selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+        print(showData(selected_show))
+        input("Press ENTER to exit. |")
+      else:
+        return input("[X] Invalid number range.")
     else:
       return
   else:
@@ -518,7 +569,7 @@ def watching():
     for i in range(len(checkLoggedIn()[1]['ShowsWatching'])):
       print(f"[{i}] | Show: {checkLoggedIn()[1]['ShowsWatching'][i]['Name']} | EP: {checkLoggedIn()[1]['ShowsWatching'][i]['Episode']} | Status: {checkLoggedIn()[1]['ShowsWatching'][i]['Status']}")
     print("[i] Total items: " + str(len(checkLoggedIn()[1]['ShowsWatching'])))
-    print("| Change [c] | Remove [r] | Move to Completed [m] | Exit [e]")
+    print("| Change [c] | Remove [r] | Move to Completed [m] | View [v] | Exit [e]")
     action = str(input(">>> "))
     if action == "c":
       change = str(input(f"[{assistantName}] 🤔 < Change what? (name/episode) "))
@@ -616,6 +667,21 @@ def watching():
             checkLoggedIn()[1]['CompletedShows'].append(checkLoggedIn()[1]['ShowsWatching'][move]['Name'])
             checkLoggedIn()[1]['ShowsWatching'].pop(move)
             print("[✔] Nice, you finished a show!")
+    elif action == "v":
+      heading("Menu > Currently Watching > View Show")
+      loopThroughShows()
+      view = input(f"[{assistantName}] 🤔 < Which show do you want to view? ")
+      try:
+        view = int(view)
+      except ValueError:
+        input("[X] Invalid input, please try again!")
+      if view in range(0, len(checkLoggedIn()[1]['ShowsWatching'])):
+        movie_id = ia.search_movie(checkLoggedIn()[1]['ShowsWatching'][view]['Name'].strip())[0].movieID # Search the show, get the first result, and get the movie ID.
+        selected_show = ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+        print(showData(selected_show))
+        input("Press ENTER to exit. | ")
+      else:
+        return input("[X] Invalid number range.")
     else:
       return
     json.dump(accounts, open("data.py", "w"), indent=2)
@@ -718,8 +784,6 @@ def searchShows():
     print("| Add [a] | Search Again [s] | Exit [e]")
     action = str(input(">>> "))
     if action.strip().lower() == "a":
-      if checkShow(selectedSearchedShow):
-        return
       episode = int(input(f"[{assistantName}] 🤔 < Which episode would you like to watch?"))
       location = str(input(f"[{assistantName}] 🤔 < Where would you like to save this to? (watchingNow/watchingLater/both) "))
 
@@ -734,6 +798,8 @@ def searchShows():
         saveLocation = "watchingLater"
       elif location.strip().lower() == "both":
         saveLocation = "both"
+      if checkShow(selectedSearchedShow, location.strip().lower()):
+        return
       addNewShow(selectedSearchedShow, episode, saveLocation)
       selectedSearchedShow = None
       print("[✔] Process complete.")
