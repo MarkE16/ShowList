@@ -1,0 +1,152 @@
+[
+  {
+    "Name": "Mark",
+    "Password": "coder1623",
+    "Logged In": true,
+    "ShowsToWatch": [
+      "Hunter x Hunter",
+      "Sacks & Guns!!",
+      "Death Parade",
+      "The Disastrous Life of Saiki K.",
+      "Remake Our Life!",
+      "Your Lie in April",
+      "Himouto! Umaru-chan",
+      "Demon Slayer: Kimetsu no Yaiba",
+      "Nisekoi: False Love",
+      "Steins;Gate: The Movie - Load Region of D\u00e9j\u00e0 Vu",
+      "Attack on Titan",
+      "Horimiya",
+      "Haven't You Heard? I'm Sakamoto",
+      "Spy x Family"
+    ],
+    "ShowsWatching": [
+      {
+        "Name": "Hunter x Hunter",
+        "Episode": 79,
+        "Status": "Watching",
+        "Favorite": "Yes"
+      },
+      {
+        "Name": "Sacks & Guns!!",
+        "Episode": 2,
+        "Status": "Paused",
+        "Favorite": "No"
+      },
+      {
+        "Name": "The Disastrous Life of Saiki K.",
+        "Episode": 43,
+        "Status": "Watching",
+        "Favorite": "Yes"
+      },
+      {
+        "Name": "Remake Our Life!",
+        "Episode": 2,
+        "Status": "Paused",
+        "Favorite": "No"
+      },
+      {
+        "Name": "Demon Slayer: Kimetsu no Yaiba",
+        "Episode": 37,
+        "Status": "Waiting",
+        "Favorite": "Yes"
+      },
+      {
+        "Name": "Erased",
+        "Episode": 13,
+        "Status": "Complete",
+        "Favorite": "Yes"
+      },
+      {
+        "Name": "Your Lie in April",
+        "Episode": 16,
+        "Status": "Watching",
+        "Favorite": "No"
+      },
+      {
+        "Name": "Attack on Titan",
+        "Episode": 4,
+        "Status": "Paused",
+        "Favorite": "No"
+      },
+      {
+        "Name": "Horimiya",
+        "Episode": 1,
+        "Status": "Paused",
+        "Favorite": "No"
+      },
+      {
+        "Name": "Haven't You Heard? I'm Sakamoto",
+        "Episode": 2,
+        "Status": "Watching",
+        "Favorite": "Yes"
+      },
+      {
+        "Name": "Danganronpa 3: The End of Kibougamine Gakuen - Zetsubou-hen",
+        "Episode": 2,
+        "Status": "Watching",
+        "Favorite": "No"
+      },
+      {
+        "Name": "Danganronpa 3: The End of Kibougamine Gakuen - Mirai-hen",
+        "Episode": 2,
+        "Status": "Watching",
+        "Favorite": "No"
+      },
+      {
+        "Name": "Assassination Classroom",
+        "Episode": 25,
+        "Status": "Dropped",
+        "Favorite": "No"
+      },
+      {
+        "Name": "Spy x Family",
+        "Episode": 2,
+        "Status": "Watching",
+        "Favorite": "Yes"
+      }
+    ],
+    "CompletedShows": [
+      "TONIKAWA: Over the Moon for You",
+      "My Hero Academia",
+      "Steins;Gate",
+      "Steins;Gate 0",
+      "Golden Time",
+      "Tsuujou Kougeki ga Zentai Kougeki de Ni-kai Kougeki no Okaasan wa Suki Desuka?",
+      "Rent-a-Girlfriend",
+      "Kill la Kill",
+      "The Quintessential Quintuplets",
+      "Hige o Soru. Soshite Joshikousei o Hirou.",
+      "Girlfriend, Girlfriend",
+      "We Never Learn",
+      "Komi Can't Communicate",
+      "Plastic Memories",
+      "My Senpai Is Annoying",
+      "Jibaku Shounen Hanako-kun"
+    ],
+    "Settings": {
+      "MaxResults": 10,
+      "PlotPreview": false
+    }
+  },
+  {
+    "Name": "Test",
+    "Password": "NICE",
+    "Logged In": false,
+    "ShowsToWatch": [
+      "Komi Can't Communicate"
+    ],
+    "ShowsWatching": [
+      {
+        "Name": "Komi Can't Communicate",
+        "Episode": 1,
+        "Status": "Watching",
+        "Favorite": "No"
+      }
+    ],
+    "CompletedShows": [],
+    "Settings": {
+      "MaxResults": 10,
+      "PlotPreview": true
+    }
+  }
+]
