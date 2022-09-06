@@ -24,7 +24,7 @@ class ShowList():
   # DO NOT EDIT ANY OF THE FOLLOWING CODE UNLESS YOU KNOW WHAT YOU ARE DOING. ~ Mark
 
   def __init__(self) -> None:
-    self.__version__ = "v1.3"
+    self.__version__ = "v2.0"
     self.__moduleversion__ = "v1.0.0"
     self.__programname__ = "Show List"
     self.__author__ = "Mark E"
@@ -91,7 +91,7 @@ class ShowList():
   def up_to_date(self) -> bool | tuple | str:
     """
     up_to_date method. This method will check if the current version of the program is up to date.
-    :return: True if the program is up to date, False if it is not, and the version number of the latest version if it is not up to date as a tuple.
+    :return: True if the program is up-to-date, False if it is not, and the version number of the latest version if it is not up to date as a tuple.
     """
     ver = self.github.get_repo("MarkE16/ShowList").get_latest_release().tag_name
 
@@ -124,22 +124,34 @@ class ShowList():
     
   #   self.__version__ = open("version.txt", "r").read()
 
+  @time_execution
+  def getTitleID(self, queryName: str) -> str:
+    """
+    getTitleID method. This method will return the ID of the first result that closely represents the given query title.
+    :param queryName: The show to get the ID of.
+    :return: The ID of the show.
+    """
+    if isinstance(queryName, str):
+      return self.ia.search_movie(queryName)[0].movieID
+    else:
+      raise TypeError("Parameter 'queryName' must be string.")
 
   @time_execution
-  def get_show_info(self, show:str | int, data="all") -> dict | list | str | int:
+  def get_show_info(self, titleID: str, data="all") -> dict | list | str | int:
     """
     get_show_info method. This method will get the IMDB information for a show.
-    :param show: The show to get the information for.
+    :param titleID: The show to get the information for.
     :param data: The data to get. (types: all [default], title, year, rating, etc.)
     :return: The data requested.
     """
-    if isinstance(show, str):
-      showID = self.search_show(show)[0].movieID
-      info = self.ia.get_movie(showID)
-    elif isinstance(show, int):
-      info = self.ia.get_movie(show)
-    else:
-      raise TypeError("Parameter 'show' must be string or int.")
+    # if isinstance(show, str):
+    #   showID = self.search_show(show)[0].movieID
+    #   info = self.ia.get_movie(showID)
+    # elif isinstance(show, int):
+    #   info = self.ia.get_movie(show)
+    # else:
+    #   raise TypeError("Parameter 'show' must be string or int.")
+    info: dict = self.ia.get_movie(titleID)
     match data:
       case "all":
         return info
@@ -160,7 +172,7 @@ class ShowList():
       case "cast":
         return info['cast']
       case "episodes":
-        return self.ia.get_movie_episodes(info.movieID)['data']['number of episodes']
+        return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
       case "seasons":
         if info['kind'] == 'movie':
           raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")

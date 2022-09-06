@@ -8,6 +8,7 @@ from auth import *
 from github.GithubException import BadCredentialsException, RateLimitExceededException
 from imdb._exceptions import IMDbDataAccessError
 
+
 def timeex(func):
   def wrapper(*args, **kwargs):
     start = time()
@@ -15,7 +16,9 @@ def timeex(func):
     end = time()
     print(f"Execution time: {round(end - start, 2)} seconds")
     return result
+
   return wrapper
+
 
 guestShowsToWatch = []
 guestShowsWatching = []
@@ -24,10 +27,11 @@ guestSettings = {"MaxResults": 10, "PlotPreview": False}
 accounts = []
 increment = 0
 selectedSearchedShow = None
-showList = ShowList() # Initialize the Show List class
+showList = ShowList()  # Initialize the Show List class
 statuses = ["Watching", "Complete", "Paused", "Dropped", "Uncertain", "Waiting"]
 name: str = ""
 colorama.init(autoreset=True)
+
 
 def heading(text):
   for i in range(len(text)):
@@ -37,6 +41,19 @@ def heading(text):
   for i in range(len(text)):
     print("-", end="")
   print()
+
+
+def getInput(dataType: str | int | float | bool, message: str) -> str | int | float | bool:
+  match dataType:
+    case "str":
+      return str(input(message))
+    case "int":
+      return int(input(message))
+    case "float":
+      return float(input(message))
+    case "bool":
+      return bool(input(message))
+
 
 def checkForUpdates():
   sys.stdout.write("[.] Checking for updates...")
@@ -49,12 +66,13 @@ def checkForUpdates():
       "\r========================================================\n"
       f"{Fore.LIGHTYELLOW_EX}/!\{Fore.WHITE} A {Fore.YELLOW}new version{Fore.WHITE} is available!\n"
       ">>> Current version: " + str(showList.__version__) + " | Latest version: " + str(showList.up_to_date()[1]) + "\n"
-      f"\nYou can download the latest version from: https://www.github.com/MarkE16/ShowList\n{Fore.RED}Note: Save data will not transfer, so you'll need to go into program's files and make a copy of the"
-      f" data.json file, then transfer it to the new version. More information about updating on the Github page.{Fore.WHITE}\n"
-      "========================================================\n"
+                                                                                                                    f"\nYou can download the latest version from: https://www.github.com/MarkE16/ShowList\n{Fore.RED}Note: Save data will not transfer, so you'll need to go into program's files and make a copy of the"
+                                                                                                                    f" data.json file, then transfer it to the new version. More information about updating on the Github page.{Fore.WHITE}\n"
+                                                                                                                    "========================================================\n"
     )
   else:
     input(showList.up_to_date())
+
 
 def searchSettings():
   heading("Menu > Settings > Search Settings")
@@ -70,7 +88,8 @@ def searchSettings():
     input(f"[{Fore.RED}!{Fore.WHITE}] Invalid input.\n")
   if choice == 1:
     heading("Menu > Settings > Search Settings > Edit Max Search Results")
-    print("[i] Current Max Number Set: " + str(guestSettings["MaxResults"] if not checkLoggedIn() else checkLoggedIn()[1]['Settings']['MaxResults']))
+    print("[i] Current Max Number Set: " + str(
+      guestSettings["MaxResults"] if not checkLoggedIn() else checkLoggedIn()[1]['Settings']['MaxResults']))
     while True:
       newMax = input("[i] Enter the new Max Number (e to exit): ")
       if newMax == "e":
@@ -83,7 +102,8 @@ def searchSettings():
       if newMax < 1:
         input(f"[{Fore.RED}!{Fore.WHITE}] Number cannot be 0 or less.")
         continue
-      confirm = input(f"[?] If increasing the limit, it may take longer to fetch results. Otherwise, confirm the change to {Fore.LIGHTYELLOW_EX}{newMax}{Fore.WHITE}? (y/n): ")
+      confirm = input(
+        f"[?] If increasing the limit, it may take longer to fetch results. Otherwise, confirm the change to {Fore.LIGHTYELLOW_EX}{newMax}{Fore.WHITE}? (y/n): ")
       if confirm == "y":
         break
     if not checkLoggedIn():
@@ -93,8 +113,10 @@ def searchSettings():
     print(f"[{Fore.GREEN}√{Fore.WHITE}] Max Search Results set to {Fore.LIGHTYELLOW_EX}{newMax}{Fore.WHITE}.")
   elif choice == 2:
     heading("Menu > Settings > Search Settings > Toggle Plot Preview")
-    print("[i] Current Plot Preview Setting: " + str(guestSettings["PlotPreview"] if not checkLoggedIn() else checkLoggedIn()[1]['Settings']['PlotPreview']))
-    print(f"[i] Tip: Disabling Plot Preview may {Fore.LIGHTGREEN_EX}decrease{Fore.WHITE} the time it takes to fetch results by {Fore.LIGHTYELLOW_EX}a lot{Fore.WHITE}, depending on the max limit.")
+    print("[i] Current Plot Preview Setting: " + str(
+      guestSettings["PlotPreview"] if not checkLoggedIn() else checkLoggedIn()[1]['Settings']['PlotPreview']))
+    print(
+      f"[i] Tip: Disabling Plot Preview may {Fore.LIGHTGREEN_EX}decrease{Fore.WHITE} the time it takes to fetch results by {Fore.LIGHTYELLOW_EX}a lot{Fore.WHITE}, depending on the max limit.")
     print(
       "[1] Enable Plot Preview.\n"
       "[2] Disable Plot Preview."
@@ -143,7 +165,7 @@ def checkLoggedIn():
 def loopThroughShows(showList):
   if showList:
     return tabulate(showList, headers="keys", tablefmt="fancy_grid", showindex="always", numalign="center")
-  return 0 # Return 0 if list is empty.
+  return 0  # Return 0 if list is empty.
 
 
 def completed():
@@ -155,7 +177,7 @@ def completed():
       heading("Menu > Completed Shows")
       for show in guestCompletedShows:
         print("-> " + show)
-      #print(loopThroughShows(guestCompletedShows))
+      # print(loopThroughShows(guestCompletedShows))
       print("[i] Total items: " + str(len(guestCompletedShows)))
       print("| Remove [r] | Exit [e]")
       action = input(">>> ")
@@ -188,7 +210,7 @@ def completed():
       heading("Menu > Completed Shows")
       for show in checkLoggedIn()[1]["CompletedShows"]:
         print("-> " + show)
-      #print(loopThroughShows(checkLoggedIn()[1]["CompletedShows"]))
+      # print(loopThroughShows(checkLoggedIn()[1]["CompletedShows"]))
       print("[i] Total items: " + str(len(checkLoggedIn()[1]["CompletedShows"])))
       print("| Remove [r] | Exit [e]")
       action = input(">>> ")
@@ -204,7 +226,8 @@ def completed():
           input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again.")
         if remove in range(0, len(checkLoggedIn()[1]["CompletedShows"])):
           while True:
-            confirm = input("[?] Are you sure you want to remove '" + checkLoggedIn()[1]["CompletedShows"][remove] + "'? [y/n] ")
+            confirm = input(
+              "[?] Are you sure you want to remove '" + checkLoggedIn()[1]["CompletedShows"][remove] + "'? [y/n] ")
             if confirm.strip().lower() == "y":
               break
             remove = input("[?] Which show would you like to remove? ")
@@ -216,6 +239,7 @@ def completed():
           json.dump(accounts, open("data.json", "w"), indent=2)
           print("[✔] Removed show.")
 
+
 def checkShow(show, location):
   global accounts
 
@@ -225,7 +249,7 @@ def checkShow(show, location):
         if s == show:
           input("[!] You're already planning on watching this show.")
           return True
-    
+
       for i in range(len(guestShowsWatching)):
         if guestShowsWatching[i]["Name"] == show:
           input("[!] Ops, you're already watching that show.")
@@ -237,16 +261,16 @@ def checkShow(show, location):
           return True
     elif location == "watchinglater":
       for s in guestShowsToWatch:
-          if s == show:
-            input("[!] You're already planning on watching this show.")
-            return True
+        if s == show:
+          input("[!] You're already planning on watching this show.")
+          return True
   else:
     if location == "both":
       for s in checkLoggedIn()[1]['ShowsToWatch']:
         if s == show:
           input("[!] You're already planning on watching this show.")
           return True
-      
+
       for i in range(len(checkLoggedIn()[1]['ShowsWatching'])):
         if checkLoggedIn()[1]['ShowsWatching'][i]["Name"] == show:
           input("[!] Ops, you're already watching that show.")
@@ -263,10 +287,10 @@ def checkShow(show, location):
           return True
   return False
 
+
 def addNewShow(show, episode: int, location):
   global accounts
 
-
   if not checkLoggedIn():
     if location == "watchingnow":
       showList.add_show({"Name": show, "Episode": episode, "Status": "Watching", "Favorite": "☆"}, guestShowsWatching)
@@ -277,148 +301,160 @@ def addNewShow(show, episode: int, location):
       showList.add_show(show, guestShowsToWatch)
   else:
     if location == "watchingnow":
-      showList.add_show({"Name": show, "Episode": episode, "Status": "Watching", "Favorite": "☆"}, checkLoggedIn()[1]['ShowsWatching'])
+      showList.add_show({"Name": show, "Episode": episode, "Status": "Watching", "Favorite": "☆"},
+                        checkLoggedIn()[1]['ShowsWatching'])
     elif location == "watchinglater":
       showList.add_show(show, checkLoggedIn()[1]['ShowsToWatch'])
     elif location == "both":
-      showList.add_show({"Name": show, "Episode": episode, "Status": "Watching", "Favorite": "☆"}, checkLoggedIn()[1]['ShowsWatching'])
+      showList.add_show({"Name": show, "Episode": episode, "Status": "Watching", "Favorite": "☆"},
+                        checkLoggedIn()[1]['ShowsWatching'])
       showList.add_show(show, checkLoggedIn()[1]['ShowsToWatch'])
     json.dump(accounts, open("data.json", "w"), indent=2)
-  
 
-@timeex
-def showData(show, item="all"):
-  try:
-    if isinstance(show, int):
-      data = showList.ia.get_movie(show)
-    else:
-      data = show.data
-    if item == "all":
-      if not checkLoggedIn():
-        if showList.get_show_info(show, 'kind') == "movie":
-          runtime = int(data['runtimes'][0])
-          hrs = runtime / 60
-          mins = runtime - (int(hrs) * 60)
-          return (
-            f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
-            f"-> RUNTIME: {int(hrs)}hr(s) {mins}min(s)\n"
-            f"-> RATING: {str(data['rating'])} / 10.0\n"
-            f"-> GENRES: {data['genres']}\n"
-            f"-> YEAR: {data['year']}\n"
-            f"-> VOTES: {str(data['votes'])}\n"
-            f"-> ABOUT: {data['plot'][0]}\n"
-            f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
-            f"[{Fore.RED}!{Fore.WHITE}] Movies aren't currently supported to added to 'Titles You're Watching'. They can be, but still ask for episode numbers, which don't exist for movies.\n"
-          )
-        else:
-          return (
-            f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
-            f"-> EPISODES: {showList.get_show_info(show, 'episodes')} / SEASONS: {data['seasons']}\n"# + ("ON EPISODE: " + str(guestShowsWatching[guestShowsWatching.index(show)]["Episode"]) if show in guestShowsWatching else "") + "\n"
-            f"-> RATING: {str(data['rating'])} / 10.0\n"
-            f"-> GENRES: {data['genres']}\n"
-            f"-> YEAR: {data['year']}\n"
-            f"-> VOTES: {str(data['votes'])}\n"
-            f"-> ABOUT: {data['plot'][0]}\n"
-            f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
-            f"[{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in [title['Name'] for title in guestShowsWatching] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Watching Now | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in guestShowsToWatch else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Planning to Watch | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in guestCompletedShows else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Completed\n"
-          )
-      else:
-        if data['kind'] == "movie":
-          runtime = int(data['runtimes'][0])
-          hrs = runtime / 60
-          mins = runtime - (int(hrs) * 60)
-          return (
-            f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
-            f"-> RUNTIME: {int(hrs)}hr(s) {mins}min(s)\n"
-            f"-> RATING: {str(data['rating'])} / 10.0\n"
-            f"-> GENRES: {data['genres']}\n"
-            f"-> YEAR: {data['year']}\n"
-            f"-> VOTES: {str(data['votes'])}\n"
-            f"-> ABOUT: {data['plot'][0]}\n"
-            f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
-            f"[{Fore.RED}!{Fore.WHITE}] Movies aren't currently supported to added to 'Titles You're Watching'. They can be, but still ask for episode numbers, which don't exist for movies.\n"
-            #f"[{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Watching Now | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in checkLoggedIn()[1]['ShowsToWatch'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Planning to Watch | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in checkLoggedIn()[1]['ShowsCompleted'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Completed\n"
-          )
-        else:
-          index:int
-          titles = [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']]
-          if data['title'] in titles:
-            index = titles.index(data['title'])
-          return (
-            f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
-            f"-> EPISODES: {showList.get_show_info(show, 'episodes')} / SEASONS: {data['seasons']}" + (" / ON EPISODE: " + str(checkLoggedIn()[1]['ShowsWatching'][index]["Episode"]) if data['title'] in [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']] else "") + "\n"
-            f"-> RATING: {str(data['rating'])} / 10.0\n"
-            f"-> GENRES: {data['genres']}\n"
-            f"-> YEAR: {data['year']}\n"
-            f"-> VOTES: {str(data['votes'])}\n"
-            f"-> ABOUT: {data['plot'][0]}\n"
-            f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
-            f"[{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if data['title'] in [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Watching Now | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if data['title'] in checkLoggedIn()[1]['ShowsToWatch'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Planning to Watch | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if data['title'] in checkLoggedIn()[1]['CompletedShows'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Completed\n"
-          )
-    elif item == "title":
-      return show.data['title']
-    elif item == "year":
-      return show.data['year']
-    elif item == "rating":
-      return show.data['rating']
-    elif item == "votes":
-      return show.data['votes']
-    elif item == "genres":
-      return show.data['genres']
-    elif item == "plot":
-      return show.data['plot'][0]
-    elif item == "episodes":
-      return showList.get_show_info(show, 'episodes')
-  except KeyError as err:
-    return "[X] Something went wrong when fetching data. Error: Missing key - " + str(err)
-  except IMDbDataAccessError as err:
-    return "[X] Something went wrong when fetching data. Error: IMDbDataAccessError - " + str(err)
 
-def findShow(show):
-  global accounts, name, selectedSearchedShow
-  if not checkLoggedIn():
-    loggedInLimit = guestSettings["MaxResults"]
-  else:
-    loggedInLimit = checkLoggedIn()[1]["Settings"]["MaxResults"]
-  shows = showList.search_show(show, loggedInLimit)
-  if shows:
-    for i, title in enumerate(shows):
-      if not checkLoggedIn():
-        if guestSettings["PlotPreview"]:
-          try:
-            plot = showList.ia.get_movie(title.movieID).data['plot'][0]
-            print(f"[{i}] | {title['long imdb canonical title']} | {(plot[:60] + '...' if len(plot) > 60 else plot)}")
-          except KeyError:
-            print(f"[{i}] | {title['long imdb canonical title']} | No plot preview available.")
-        else:
-          print(f"[{i}] | {title['long imdb canonical title']}")
-      else:
-        if checkLoggedIn()[1]["Settings"]["PlotPreview"]:
-          try:
-            plot = showList.ia.get_movie(title.movieID).data['plot'][0]
-            print(f"[{i}] | {title['long imdb canonical title']} | {(plot[:60] + '...' if len(plot) > 60 else plot)}")
-          except KeyError:
-            print(f"[{i}] | {title['long imdb canonical title']} | No plot preview available.")
-        else:
-          print(f"[{i}] | {title['long imdb canonical title']}")
-    print(f"[i] ITEMS: {loggedInLimit} (MAX)" if len(shows) == loggedInLimit else "[i] ITEMS: " + str(len(shows)))
-    chosenShow = input("[?] Which title would you like to view? (e to exit)")
-    if chosenShow.strip().lower() == "e":
-      return
-    else:
-      while True:
-        try:
-          chosenShow = int(chosenShow)
-          break
-        except:
-          input(f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid number.")
-          chosenShow = input("[?] Which title would you like to view? (e to exit)")
-    showTitle = int(shows[chosenShow].movieID)
-    heading("Menu > Search > Show Information")
-    print(showData(showTitle))
-    selectedSearchedShow = str(showList.get_show_info(showTitle, 'title'))
-    return True
-  return False
+# @timeex
+# def showData(show, item="all"):
+#   try:
+#     if isinstance(show, int):
+#       data = showList.ia.get_movie(show)
+#     else:
+#       data = show.data
+#     if item == "all":
+#       if not checkLoggedIn():
+#         if showList.get_show_info(show, 'kind') == "movie":
+#           runtime = int(data['runtimes'][0])
+#           hrs = runtime / 60
+#           mins = runtime - (int(hrs) * 60)
+#           return (
+#             f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
+#             f"-> RUNTIME: {int(hrs)}hr(s) {mins}min(s)\n"
+#             f"-> RATING: {str(data['rating'])} / 10.0\n"
+#             f"-> GENRES: {data['genres']}\n"
+#             f"-> YEAR: {data['year']}\n"
+#             f"-> VOTES: {str(data['votes'])}\n"
+#             f"-> ABOUT: {data['plot'][0]}\n"
+#             f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
+#             f"[{Fore.RED}!{Fore.WHITE}] Movies aren't currently supported to added to 'Titles You're Watching'. They can be, but still ask for episode numbers, which don't exist for movies.\n"
+#           )
+#         else:
+#           return (
+#             f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
+#             f"-> EPISODES: {showList.get_show_info(show, 'episodes')} / SEASONS: {data['seasons']}\n"  # + ("ON EPISODE: " + str(guestShowsWatching[guestShowsWatching.index(show)]["Episode"]) if show in guestShowsWatching else "") + "\n"
+#             f"-> RATING: {str(data['rating'])} / 10.0\n"
+#             f"-> GENRES: {data['genres']}\n"
+#             f"-> YEAR: {data['year']}\n"
+#             f"-> VOTES: {str(data['votes'])}\n"
+#             f"-> ABOUT: {data['plot'][0]}\n"
+#             f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
+#             f"[{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in [title['Name'] for title in guestShowsWatching] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Watching Now | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in guestShowsToWatch else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Planning to Watch | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in guestCompletedShows else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Completed\n"
+#           )
+#       else:
+#         if data['kind'] == "movie":
+#           runtime = int(data['runtimes'][0])
+#           hrs = runtime / 60
+#           mins = runtime - (int(hrs) * 60)
+#           return (
+#             f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
+#             f"-> RUNTIME: {int(hrs)}hr(s) {mins}min(s)\n"
+#             f"-> RATING: {str(data['rating'])} / 10.0\n"
+#             f"-> GENRES: {data['genres']}\n"
+#             f"-> YEAR: {data['year']}\n"
+#             f"-> VOTES: {str(data['votes'])}\n"
+#             f"-> ABOUT: {data['plot'][0]}\n"
+#             f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
+#             f"[{Fore.RED}!{Fore.WHITE}] Movies aren't currently supported to added to 'Titles You're Watching'. They can be, but still ask for episode numbers, which don't exist for movies.\n"
+#             # f"[{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Watching Now | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in checkLoggedIn()[1]['ShowsToWatch'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Planning to Watch | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if show.data['title'] in checkLoggedIn()[1]['ShowsCompleted'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Completed\n"
+#           )
+#         else:
+#           index: int
+#           titles = [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']]
+#           if data['title'] in titles:
+#             index = titles.index(data['title'])
+#           return (
+#             f"-> TITLE: {data['title']} - {data['kind'].capitalize()}\n"
+#             f"-> EPISODES: {showList.get_show_info(show, 'episodes')} / SEASONS: {data['seasons']}" + (
+#               " / ON EPISODE: " + str(checkLoggedIn()[1]['ShowsWatching'][index]["Episode"]) if data['title'] in [
+#                 title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']] else "") + "\n"
+#                                                                                            f"-> RATING: {str(data['rating'])} / 10.0\n"
+#                                                                                            f"-> GENRES: {data['genres']}\n"
+#                                                                                            f"-> YEAR: {data['year']}\n"
+#                                                                                            f"-> VOTES: {str(data['votes'])}\n"
+#                                                                                            f"-> ABOUT: {data['plot'][0]}\n"
+#                                                                                            f"-> IMDB LINK: {showList.get_show_info(show, 'url')}\n"
+#                                                                                            f"[{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if data['title'] in [title['Name'] for title in checkLoggedIn()[1]['ShowsWatching']] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Watching Now | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if data['title'] in checkLoggedIn()[1]['ShowsToWatch'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Planning to Watch | [{(f'{Fore.LIGHTGREEN_EX}√{Fore.WHITE}' if data['title'] in checkLoggedIn()[1]['CompletedShows'] else f'{Fore.LIGHTRED_EX}X{Fore.WHITE}')}] Completed\n"
+#           )
+#     elif item == "title":
+#       return show.data['title']
+#     elif item == "year":
+#       return show.data['year']
+#     elif item == "rating":
+#       return show.data['rating']
+#     elif item == "votes":
+#       return show.data['votes']
+#     elif item == "genres":
+#       return show.data['genres']
+#     elif item == "plot":
+#       return show.data['plot'][0]
+#     elif item == "episodes":
+#       return showList.get_show_info(show, 'episodes')
+#   except KeyError as err:
+#     return "[X] Something went wrong when fetching data. Error: Missing key - " + str(err)
+#   except IMDbDataAccessError as err:
+#     return "[X] Something went wrong when fetching data. Error: IMDbDataAccessError - " + str(err)
+
+def getTitleInformation(queryID: str):
+  pass
+
+# def findShow(show):
+#   global accounts, name, selectedSearchedShow
+#   if not checkLoggedIn():
+#     loggedInLimit = guestSettings["MaxResults"]
+#   else:
+#     loggedInLimit = checkLoggedIn()[1]["Settings"]["MaxResults"]
+#   shows = showList.search_show(show, loggedInLimit)
+#   if shows:
+#     for i, title in enumerate(shows):
+#       if not checkLoggedIn():
+#         if guestSettings["PlotPreview"]:
+#           try:
+#             plot = showList.ia.get_movie(title.movieID).data['plot'][0]
+#             print(f"[{i}] | {title['long imdb canonical title']} | {(plot[:60] + '...' if len(plot) > 60 else plot)}")
+#           except KeyError:
+#             print(f"[{i}] | {title['long imdb canonical title']} | No plot preview available.")
+#         else:
+#           print(f"[{i}] | {title['long imdb canonical title']}")
+#       else:
+#         if checkLoggedIn()[1]["Settings"]["PlotPreview"]:
+#           try:
+#             plot = showList.ia.get_movie(title.movieID).data['plot'][0]
+#             print(f"[{i}] | {title['long imdb canonical title']} | {(plot[:60] + '...' if len(plot) > 60 else plot)}")
+#           except KeyError:
+#             print(f"[{i}] | {title['long imdb canonical title']} | No plot preview available.")
+#         else:
+#           print(f"[{i}] | {title['long imdb canonical title']}")
+#     print(f"[i] ITEMS: {loggedInLimit} (MAX)" if len(shows) == loggedInLimit else "[i] ITEMS: " + str(len(shows)))
+#     chosenShow = input("[?] Which title would you like to view? (e to exit)")
+#     if chosenShow.strip().lower() == "e":
+#       return
+#     else:
+#       while True:
+#         try:
+#           chosenShow = int(chosenShow)
+#           break
+#         except:
+#           input(f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid number.")
+#           chosenShow = input("[?] Which title would you like to view? (e to exit)")
+#     showTitle = int(shows[chosenShow].movieID)
+#     heading("Menu > Search > Show Information")
+#     print(showData(showTitle))
+#     selectedSearchedShow = str(showList.get_show_info(showTitle, 'title'))
+#     return True
+#   return False
+
+def getFoundShows(query: str):
+  return showList.search_show(query, 10)
+
+# def
 
 def create_account():
   global accounts
@@ -455,8 +491,8 @@ def create_account():
   print("[i] Step 3/3")
   print("| Now, let's confirm your information.")
   print(
-  f"| Username: {name}\n"
-  f"| Password: {password}"
+    f"| Username: {name}\n"
+    f"| Password: {password}"
   )
   confirm = str(input("[i] Are you sure you want to create your account with the information above? (y/n) "))
   while True:
@@ -464,10 +500,12 @@ def create_account():
       break
     create_account()
     return
-  accounts.append({"Name": name, "Password": password, "Logged In": False, "ShowsToWatch": [], "ShowsWatching": [], "CompletedShows": []})
+  accounts.append({"Name": name, "Password": password, "Logged In": False, "ShowsToWatch": [], "ShowsWatching": [],
+                   "CompletedShows": []})
   json.dump(accounts, open("data.json", "w"), indent=2)
   print("[i] Your account has been created, you will now be redirected in a few seconds. Thank You!")
   sleep(randint(1, 3))
+
 
 def login(username, password):
   global accounts
@@ -475,6 +513,7 @@ def login(username, password):
     if a["Name"] == username and a["Password"] == password:
       return True
   return False
+
 
 def welcome():
   global name
@@ -489,7 +528,7 @@ def welcome():
       "[5] Why use an account?\n"
       "\n"
       f"{Fore.YELLOW}* {showList.__programname__} | {showList.__copyright__} | {showList.__version__}"
-      )
+    )
     option = input("| Enter Option > ")
     try:
       option = int(option)
@@ -512,9 +551,11 @@ def welcome():
             break
         break
       else:
-        input(f"[{Fore.RED}X{Fore.WHITE}]Failure when trying to log in. Check to make sure both your username & password is correct.")
+        input(
+          f"[{Fore.RED}X{Fore.WHITE}]Failure when trying to log in. Check to make sure both your username & password is correct.")
     elif option == 3:
-      confirm = str(input("[i] Are you sure you want to continue as a guest? Logging into an account is highly recommended. (y/n) "))
+      confirm = str(input(
+        "[i] Are you sure you want to continue as a guest? Logging into an account is highly recommended. (y/n) "))
       if confirm.strip().lower() == "y":
         name = "Guest"
         print("[i] Continuing as Guest...")
@@ -524,11 +565,11 @@ def welcome():
     elif option == 5:
       heading("Welcome > Account > Why use an account?")
       input(
-      "| An account is required in order to keep track of shows you're watching.\n"
-      "| It is not required, but without an account, you will have less features, such as saving.\n"
-      "| If you already have an account, select 'Log in', then continue from there. If not, select 'Create'.\n"
+        "| An account is required in order to keep track of shows you're watching.\n"
+        "| It is not required, but without an account, you will have less features, such as saving.\n"
+        "| If you already have an account, select 'Log in', then continue from there. If not, select 'Create'.\n"
       )
-  
+
 
 def check_time(name):
   now = datetime.datetime.now()
@@ -544,6 +585,7 @@ def check_time(name):
   else:
     print(f"[👋] Hello, {name}, nice to see you.")
 
+
 def listOfShows():
   global accounts
   sys.stdout.write("[🔄] Fetching list...")
@@ -556,7 +598,7 @@ def listOfShows():
       heading("Menu > Shows to Watch")
       for i, show in enumerate(guestShowsToWatch):
         print(f"[{i}] {show}")
-      #print(loopThroughShows(guestShowsToWatch))
+      # print(loopThroughShows(guestShowsToWatch))
       print("[i] Total items: " + str(len(guestShowsToWatch)))
       print("| View [#] | Remove [r] | Exit [e]")
       action = input(">>> ")
@@ -588,8 +630,9 @@ def listOfShows():
         input(f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid input.")
       if action in range(0, len(guestShowsToWatch)):
         heading("Menu > Shows to Watch > View Show")
-        movie_id = showList.ia.search_movie(guestShowsToWatch[action].strip())[0].movieID # Search the show, get the first result, and get the movie ID.
-        selected_show = showList.ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+        movie_id = showList.ia.search_movie(guestShowsToWatch[action].strip())[
+          0].movieID  # Search the show, get the first result, and get the movie ID.
+        selected_show = showList.ia.get_movie(movie_id)  # Fetch the movie using the movie ID.
         print(showData(selected_show))
         return input("Press ENTER to exit. | ")
       else:
@@ -601,7 +644,7 @@ def listOfShows():
       heading("Menu > Shows to Watch")
       for i, show in enumerate(checkLoggedIn()[1]['ShowsToWatch']):
         print(f"[{i}] {show}")
-      #print(loopThroughShows(checkLoggedIn()[1]['ShowsToWatch']))
+      # print(loopThroughShows(checkLoggedIn()[1]['ShowsToWatch']))
       print("[i] Total items: " + str(len(checkLoggedIn()[1]['ShowsToWatch'])))
       print("| View [#] | Remove [r] | Exit [e]")
       action = input(">>> ")
@@ -614,17 +657,20 @@ def listOfShows():
         try:
           remove = int(remove)
         except ValueError:
-          input(f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid input. 0 - {str(len(checkLoggedIn()[1]['ShowsToWatch']) - 1)}")
+          input(
+            f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid input. 0 - {str(len(checkLoggedIn()[1]['ShowsToWatch']) - 1)}")
         if remove in range(0, len(checkLoggedIn()[1]['ShowsToWatch'])):
           while True:
-            confirm = input(f"[i] Are you sure you want to remove '{checkLoggedIn()[1]['ShowsToWatch'][remove]}'? (y/n) ")
+            confirm = input(
+              f"[i] Are you sure you want to remove '{checkLoggedIn()[1]['ShowsToWatch'][remove]}'? (y/n) ")
             if confirm.strip().lower() == "y":
               break
             remove = input("[i] Enter the number of the show you want to remove: ")
             try:
               remove = int(remove)
             except ValueError:
-              input(f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid input. 0 - {str(len(checkLoggedIn()[1]['ShowsToWatch']) - 1)}")
+              input(
+                f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid input. 0 - {str(len(checkLoggedIn()[1]['ShowsToWatch']) - 1)}")
           showList.remove_show(remove, checkLoggedIn()[1]['ShowsToWatch'])
           json.dump(accounts, open("data.json", "w"), indent=2)
           return print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Show removed.")
@@ -635,11 +681,13 @@ def listOfShows():
         input(f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid input.")
       if action in range(0, len(checkLoggedIn()[1]['ShowsToWatch'])):
         heading("Menu > Shows to Watch > View Show")
-        selected_show = int(showList.ia.search_movie(checkLoggedIn()[1]['ShowsToWatch'][action].strip())[0].movieID) # Search the show, get the first result, and get the movie ID.
+        selected_show = int(showList.ia.search_movie(checkLoggedIn()[1]['ShowsToWatch'][action].strip())[
+                              0].movieID)  # Search the show, get the first result, and get the movie ID.
         print(showData(selected_show))
         return input("Press ENTER to exit. | ")
       else:
         input(f"[{Fore.RED}X{Fore.WHITE}] Please enter a valid input.")
+
 
 def watching():
   global accounts
@@ -654,7 +702,7 @@ def watching():
     action = str(input(">>> "))
     if action == "c":
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
-      edit = input("[?] Which title do you want to edit? ") 
+      edit = input("[?] Which title do you want to edit? ")
       try:
         edit = int(edit)
       except ValueError:
@@ -670,7 +718,8 @@ def watching():
           except ValueError:
             input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again!")
           while True:
-            confirm = str(input(f"[?] You're currently on episode {episode} on '{guestShowsWatching[edit]['Name']}'? (y/n)"))
+            confirm = str(
+              input(f"[?] You're currently on episode {episode} on '{guestShowsWatching[edit]['Name']}'? (y/n)"))
             if confirm.strip().lower() == "y":
               break
             episode = input("[?] Enter the episode number. ('e' to exit). ")
@@ -681,9 +730,11 @@ def watching():
             except ValueError:
               input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again!")
           guestShowsWatching[edit]["Episode"] = episode
-          if guestShowsWatching[edit]["Episode"] == showData(showList.ia.search_movie(guestShowsWatching[edit]["Name"])[0], "episodes"):
+          if guestShowsWatching[edit]["Episode"] == showData(
+            showList.ia.search_movie(guestShowsWatching[edit]["Name"])[0], "episodes"):
             guestShowsWatching[edit]["Status"] = "Complete"
-            return input(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] You've completed '{guestShowsWatching[edit]['Name']}'! Its status is now set to 'complete'.")
+            return input(
+              f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] You've completed '{guestShowsWatching[edit]['Name']}'! Its status is now set to 'complete'.")
           print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Process complete.")
         elif change.strip().lower() == "status":
           print("[i] Status for '" + guestShowsWatching[edit]["Name"] + "': " + guestShowsWatching[edit]["Status"])
@@ -702,7 +753,8 @@ def watching():
           else:
             return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0-5.")
       else:
-        return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(guestShowsWatching) - 1) + ".")
+        return input(
+          f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(guestShowsWatching) - 1) + ".")
     elif action == "r":
       heading("Menu > Currently Watching > Remove Show")
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
@@ -717,7 +769,8 @@ def watching():
           showList.remove_show(remove, guestShowsWatching)
           input(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Removed title.")
       else:
-        input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(guestShowsWatching) - 1) + ".")
+        input(
+          f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(guestShowsWatching) - 1) + ".")
     elif action == "m":
       heading("Menu > Currently Watching > Move Show")
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
@@ -731,20 +784,23 @@ def watching():
           input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again!")
         if move in range(0, len(guestShowsWatching)):
           if guestShowsWatching[move]['Status'] != "Complete":
-            confirm = str(input(f"[?] You aren't completed with '{guestShowsWatching[move]['Name']}' yet, continue anyway? (y/n) "))
+            confirm = str(
+              input(f"[?] You aren't completed with '{guestShowsWatching[move]['Name']}' yet, continue anyway? (y/n) "))
             if confirm.strip().lower() == "y":
               guestCompletedShows.append(guestShowsWatching[move]['Name'])
               guestShowsWatching.pop(move)
               print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Nice, you finished a title!")
             else:
               return
-          confirm = str(input(f"[?] You've completed '{guestShowsWatching[move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
+          confirm = str(input(
+            f"[?] You've completed '{guestShowsWatching[move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
           if confirm.strip().lower() == "y":
             guestCompletedShows.append(guestShowsWatching[move]['Name'])
             guestShowsWatching.pop(move)
             print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Nice, you finished a title!")
         else:
-          input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(guestShowsWatching) - 1) + ".")
+          input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(
+            len(guestShowsWatching) - 1) + ".")
     elif action == "v":
       heading("Menu > Currently Watching > View Show")
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
@@ -754,13 +810,15 @@ def watching():
       except ValueError:
         input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again!")
       if view in range(0, len(guestShowsWatching)):
-        movie_id = showList.ia.search_movie(guestShowsWatching[view]['Name'].strip())[0].movieID # Search the show, get the first result, and get the movie ID.
-        selected_show = showList.ia.get_movie(movie_id) # Fetch the movie using the movie ID.
+        movie_id = showList.ia.search_movie(guestShowsWatching[view]['Name'].strip())[
+          0].movieID  # Search the show, get the first result, and get the movie ID.
+        selected_show = showList.ia.get_movie(movie_id)  # Fetch the movie using the movie ID.
         print("[.] Hang on while we fetch the title...")
         print(showData(selected_show))
         input("Press ENTER to exit. |")
       else:
-        return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(guestShowsWatching) - 1) + ".")
+        return input(
+          f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(guestShowsWatching) - 1) + ".")
     elif action == "f":
       heading("Menu > Currently Watching > Favorite")
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
@@ -781,7 +839,7 @@ def watching():
     action = str(input(">>> "))
     if action == "c":
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
-      edit = input("[?] Which title do you want to edit? ") 
+      edit = input("[?] Which title do you want to edit? ")
       try:
         edit = int(edit)
       except ValueError:
@@ -797,7 +855,8 @@ def watching():
           except ValueError:
             input("[X] Invalid input, please try again!")
           while True:
-            confirm = str(input(f"[?] You're currently on episode {episode} on '{checkLoggedIn()[1]['ShowsWatching'][edit]['Name']}'? (y/n)"))
+            confirm = str(input(
+              f"[?] You're currently on episode {episode} on '{checkLoggedIn()[1]['ShowsWatching'][edit]['Name']}'? (y/n)"))
             if confirm.strip().lower() == "y":
               break
             episode = input("[?] Enter the episode number. ('e' to exit). ")
@@ -808,12 +867,15 @@ def watching():
             except ValueError:
               input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again!")
           checkLoggedIn()[1]['ShowsWatching'][edit]["Episode"] = episode
-          if checkLoggedIn()[1]['ShowsWatching'][edit]["Episode"] == showList.get_show_info(checkLoggedIn()[1]['ShowsWatching'][edit]["Name"], "episodes"):
+          if checkLoggedIn()[1]['ShowsWatching'][edit]["Episode"] == showList.get_show_info(
+            checkLoggedIn()[1]['ShowsWatching'][edit]["Name"], "episodes"):
             checkLoggedIn()[1]['ShowsWatching'][edit]["Status"] = "Complete"
-            return input(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] You've completed '{Fore.LIGHTYELLOW_EX}{checkLoggedIn()[1]['ShowsWatching'][edit]['Name']}{Fore.WHITE}'! Its status is now set to 'complete'.")
+            return input(
+              f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] You've completed '{Fore.LIGHTYELLOW_EX}{checkLoggedIn()[1]['ShowsWatching'][edit]['Name']}{Fore.WHITE}'! Its status is now set to 'complete'.")
           print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Process complete.")
         elif change.strip().lower() == "status":
-          print("[i] Status for '" + checkLoggedIn()[1]['ShowsWatching'][edit]["Name"] + "': " + checkLoggedIn()[1]['ShowsWatching'][edit]["Status"])
+          print("[i] Status for '" + checkLoggedIn()[1]['ShowsWatching'][edit]["Name"] + "': " +
+                checkLoggedIn()[1]['ShowsWatching'][edit]["Status"])
           for i, item in enumerate(statuses):
             print(f"[{i}] {item}")
           status = input("[.] Enter the status that fits best. ('e' to exit) ")
@@ -829,7 +891,8 @@ def watching():
           else:
             return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0-5.")
       else:
-        return input("[X] Invalid number range. Valid range: 0 - " + str(len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
+        return input(
+          "[X] Invalid number range. Valid range: 0 - " + str(len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
     elif action == "r":
       heading("Menu > Currently Watching > Remove Show")
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
@@ -839,12 +902,14 @@ def watching():
       except ValueError:
         input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again!")
       if remove in range(0, len(checkLoggedIn()[1]['ShowsWatching'])):
-        confirm = str(input(f"[?] Are you sure you want to remove '{checkLoggedIn()[1]['ShowsWatching'][remove]['Name']}'? (y/n) "))
+        confirm = str(
+          input(f"[?] Are you sure you want to remove '{checkLoggedIn()[1]['ShowsWatching'][remove]['Name']}'? (y/n) "))
         if confirm.strip().lower() == "y":
           showList.remove_show(remove, checkLoggedIn()[1]['ShowsWatching'])
           print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Show removed.")
       else:
-        return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
+        return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(
+          len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
     elif action == "m":
       heading("Menu > Currently Watching > Move Show")
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
@@ -858,20 +923,23 @@ def watching():
           input(f"[{Fore.RED}X{Fore.WHITE}] Invalid input, please try again!")
         if move in range(0, len(checkLoggedIn()[1]['ShowsWatching'])):
           if checkLoggedIn()[1]['ShowsWatching'][move]['Status'] != "Complete":
-            confirm = str(input(f"[?] You aren't completed with '{checkLoggedIn()[1]['ShowsWatching'][move]['Name']}' yet, continue anyway? (y/n) "))
+            confirm = str(input(
+              f"[?] You aren't completed with '{checkLoggedIn()[1]['ShowsWatching'][move]['Name']}' yet, continue anyway? (y/n) "))
             if confirm.strip().lower() == "y":
               checkLoggedIn()[1]['CompletedShows'].append(checkLoggedIn()[1]['ShowsWatching'][move]['Name'])
               checkLoggedIn()[1]['ShowsWatching'].pop(move)
               return print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Nice, you finished a show!")
             else:
               return
-          confirm = str(input(f"[?] You've completed '{checkLoggedIn()[1]['ShowsWatching'][move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
+          confirm = str(input(
+            f"[?] You've completed '{checkLoggedIn()[1]['ShowsWatching'][move]['Name']}'! Do you want to move this show to your list of completed shows? (y/n) "))
           if confirm.strip().lower() == "y":
             checkLoggedIn()[1]['CompletedShows'].append(checkLoggedIn()[1]['ShowsWatching'][move]['Name'])
             checkLoggedIn()[1]['ShowsWatching'].pop(move)
             print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Nice, you finished a show!")
         else:
-          return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
+          return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(
+            len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
     elif action == "v":
       heading("Menu > Currently Watching > View Show")
       print(loopThroughShows(guestShowsWatching if not checkLoggedIn() else checkLoggedIn()[1]['ShowsWatching']))
@@ -881,16 +949,19 @@ def watching():
       except ValueError:
         input("[X] Invalid input, please try again!")
       if view in range(0, len(checkLoggedIn()[1]['ShowsWatching'])):
-        movie_id = showList.ia.search_movie(checkLoggedIn()[1]['ShowsWatching'][view]['Name'].strip())[0].movieID # Search the show, get the first result, and get the movie ID.
+        movie_id = showList.ia.search_movie(checkLoggedIn()[1]['ShowsWatching'][view]['Name'].strip())[
+          0].movieID  # Search the show, get the first result, and get the movie ID.
         movie_id = int(movie_id)
         print("[.] Hang on while we fetch the title...")
         print(showData(movie_id))
         input("Press ENTER to exit. | ")
       else:
-        return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
+        return input(f"[{Fore.RED}X{Fore.WHITE}] Invalid number range. Valid range: 0 - " + str(
+          len(checkLoggedIn()[1]['ShowsWatching']) - 1) + ".")
     else:
       return
     json.dump(accounts, open("data.json", "w"), indent=2)
+
 
 def about():
   heading("Menu > App Information")
@@ -906,12 +977,15 @@ def about():
     try:
       checkForUpdates()
     except BadCredentialsException as err:
-      print(f"\r[{Fore.RED}!{Fore.WHITE}] Failed to fetch update info. Reason -> {err}. Please try again later when credentials are valid.")
+      print(
+        f"\r[{Fore.RED}!{Fore.WHITE}] Failed to fetch update info. Reason -> {err}. Please try again later when credentials are valid.")
     except RateLimitExceededException as err:
-      print(f"\r[{Fore.RED}!{Fore.WHITE}] Failed to fetch update info. Reason -> {err}. Please try again later on {showList.get_rate_limit_reset()}")
+      print(
+        f"\r[{Fore.RED}!{Fore.WHITE}] Failed to fetch update info. Reason -> {err}. Please try again later on {showList.get_rate_limit_reset()}")
     about()
   elif action.strip().lower() == "e":
     return
+
 
 def userSettings():
   global name, accounts
@@ -933,7 +1007,8 @@ def userSettings():
   if settings == 1:
     if name == "Guest":
       # Ask if they want to leave guest mode
-      print(f"[!] When in Guest Mode, your data will {Fore.LIGHTRED_EX}not{Fore.WHITE} be saved. Make sure to write any shows that you have on Guest Mode somewhere else so you do not lose them.")
+      print(
+        f"[!] When in Guest Mode, your data will {Fore.LIGHTRED_EX}not{Fore.WHITE} be saved. Make sure to write any shows that you have on Guest Mode somewhere else so you do not lose them.")
       confirm = str(input("[?] You're currently in guest mode, do you want to leave? (y/n) "))
       if confirm.strip().lower() == "y":
         print("| Leaving Guest Mode...")
@@ -942,7 +1017,8 @@ def userSettings():
       heading("Menu > Settings > Change Username")
       name = str(input("> Enter your new username/name: "))
       while True:
-        confirm = input(f"[?] {Fore.LIGHTYELLOW_EX}{name}{Fore.WHITE}, so this is what you want to change your username/name to? (y/n)")
+        confirm = input(
+          f"[?] {Fore.LIGHTYELLOW_EX}{name}{Fore.WHITE}, so this is what you want to change your username/name to? (y/n)")
         if confirm.strip().lower() == "y":
           break
         name = str(input("> Enter your new username/name: "))
@@ -961,18 +1037,20 @@ def userSettings():
         "[1] Erase.\n"
         "[2] On second thought...\n"
         ">>> "
-        )
+      )
       try:
         erase = int(erase)
       except ValueError:
         input("[X] Invalid input, please try again!")
       if erase == 1:
-        confirm = str(input(f"[{Fore.RED}!!!{Fore.WHITE}] Final warning: Are you positive that you want to {Fore.LIGHTRED_EX}erase ALL data completely{Fore.WHITE}? This cannot be {Fore.LIGHTYELLOW_EX}undone{Fore.WHITE}. (y/n)"))
+        confirm = str(input(
+          f"[{Fore.RED}!!!{Fore.WHITE}] Final warning: Are you positive that you want to {Fore.LIGHTRED_EX}erase ALL data completely{Fore.WHITE}? This cannot be {Fore.LIGHTYELLOW_EX}undone{Fore.WHITE}. (y/n)"))
         if confirm.strip().lower() == "y":
           accounts.remove(checkLoggedIn()[1])
           json.dump(accounts, open("data.json", "w"), indent=2)
           print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Data erased successfully.")
-          advance = str(input(f"[.] In order to continue using this program, you'll need to {Fore.LIGHTYELLOW_EX}create a new account{Fore.WHITE}, or use {Fore.LIGHTYELLOW_EX}Guest Mode{Fore.WHITE}. If you want to later, type 'exit', if you want to now, type 'new'. (new/exit) "))
+          advance = str(input(
+            f"[.] In order to continue using this program, you'll need to {Fore.LIGHTYELLOW_EX}create a new account{Fore.WHITE}, or use {Fore.LIGHTYELLOW_EX}Guest Mode{Fore.WHITE}. If you want to later, type 'exit', if you want to now, type 'new'. (new/exit) "))
           if advance.strip().lower() == "new":
             welcome()
           else:
@@ -1004,30 +1082,45 @@ def userSettings():
 def searchShows():
   global selectedSearchedShow
   heading("Menu > Search")
-  show = str(input("[?] What title are you looking for? (e to exit) "))
+  # show = str(input("[?] What title are you looking for? (e to exit) "))
+  # if show.strip().lower() == "e":
+  #   return
+  # print("[!] Searching... [This may take a while.]")
+  # if not findShow(show):
+  #   return
+  # else:
+  #   print("| Add [a] | Search Again [s] | Exit [e]")
+  #   action = str(input(">>> "))
+  #   if action.strip().lower() == "a":
+  #     episode = int(input("[.] Enter the episode where you want to start watching: "))
+  #     saveLocation = str(input("[?] Where would you like to save this to? (watchingNow/watchingLater/both) "))
+  #
+  #     while saveLocation.strip().lower() not in ["watchingnow", "watchinglater", "both"]:
+  #       input("[X] Invalid option. Please try again.")
+  #       saveLocation = str(input("[?] Where would you like to save this to? (watchingNow/watchingLater/both) "))
+  #     if checkShow(selectedSearchedShow, saveLocation.strip().lower()):
+  #       return
+  #     addNewShow(selectedSearchedShow, episode, location=saveLocation.strip().lower())
+  #     selectedSearchedShow = None
+  #     print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Process complete.")
+  #   elif action.strip().lower() == "s":
+  #     searchShows()
+  #     return
+  show: str = getInput("str", "[?] What title are you looking for? (e to exit) ")
   if show.strip().lower() == "e":
     return
   print("[!] Searching... [This may take a while.]")
-  if not findShow(show):
+  for index, title in enumerate(getFoundShows(show)):
+    print(f"[{index + 1}] {title['long imdb canonical title']}")
+  titleIndex: int = getInput("int", "[?] Which show would you like to select? (-1 to exit) ")
+  if titleIndex == -1:
     return
-  else:
-    print("| Add [a] | Search Again [s] | Exit [e]")
-    action = str(input(">>> "))
-    if action.strip().lower() == "a":
-      episode = int(input("[.] Enter the episode where you want to start watching: "))
-      saveLocation = str(input("[?] Where would you like to save this to? (watchingNow/watchingLater/both) "))
+  selectedTitle: dict = getFoundShows(show)[titleIndex - 1]
+  titleID = showList.getTitleID(selectedTitle["long imdb canonical title"])
+  print(f"[!] Getting data for {selectedTitle['long imdb canonical title']}...")
+  print(showList.get_show_info(titleID, "kind"))
 
-      while saveLocation.strip().lower() not in ["watchingnow", "watchinglater", "both"]:
-        input("[X] Invalid option. Please try again.")
-        saveLocation = str(input("[?] Where would you like to save this to? (watchingNow/watchingLater/both) "))
-      if checkShow(selectedSearchedShow, saveLocation.strip().lower()):
-        return
-      addNewShow(selectedSearchedShow, episode, location=saveLocation.strip().lower())
-      selectedSearchedShow = None
-      print(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Process complete.")
-    elif action.strip().lower() == "s":
-      searchShows()
-      return
+
 
 def feedback():
   heading("Menu > Feedback")
@@ -1037,16 +1130,17 @@ def feedback():
   )
   input("Press ENTER to return to the menu. |")
 
+
 def main():
   global name, selectedSearchedShow, accounts
-
 
   try:
     accounts = json.load(open("data.json", "r"))
   except:
     print("[.] Some data didn't load.")
   if not showList.authenticated():
-    print(f"{Fore.RED}[!] You're not authenticated. It's not required, but it's HIGHLY recommended that you do so to increase Github's rate limit. Visit the Github page for more info on how to authenticate. -> https://www.github.com/MarkE16/ShowList")
+    print(
+      f"{Fore.RED}[!] You're not authenticated. It's not required, but it's HIGHLY recommended that you do so to increase Github's rate limit. Visit the Github page for more info on how to authenticate. -> https://www.github.com/MarkE16/ShowList")
 
   if not checkLoggedIn():
     welcome()
@@ -1086,12 +1180,12 @@ def main():
       feedback()
     elif action == 7:
       if name == "Guest":
-        warning = str(input(f"[{Fore.RED}!{Fore.WHITE}] You're in {Fore.LIGHTYELLOW_EX}Guest Mode{Fore.WHITE}, and by exiting your data will be {Fore.LIGHTRED_EX}lost{Fore.WHITE}. Be sure to write down your shows somewhere else before exiting. Otherwise, do you really want to exit? (y/n)"))
+        warning = str(input(
+          f"[{Fore.RED}!{Fore.WHITE}] You're in {Fore.LIGHTYELLOW_EX}Guest Mode{Fore.WHITE}, and by exiting your data will be {Fore.LIGHTRED_EX}lost{Fore.WHITE}. Be sure to write down your shows somewhere else before exiting. Otherwise, do you really want to exit? (y/n)"))
         if warning.strip().lower() == "y":
           sys.exit(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Closed.")
       else:
         sys.exit(f"[{Fore.LIGHTGREEN_EX}√{Fore.WHITE}] Closed.")
-
 
 
 if __name__ == "__main__":
