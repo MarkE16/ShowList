@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import imdb, github, colorama
 from datetime import datetime
 from colorama import Fore
 from auth import *
 from time import time
+# import bs4, requests, json
 
 # Create a function that calculates the execution time of a function
 def time_execution(func):
@@ -30,7 +33,11 @@ class ShowList():
     self.__author__ = "Mark E"
     self.__description__ = "A program that allows you to keep track of shows you're watching."
     self.__copyright__ = "Copyright (c) 2021-2022 Mark E"
-    self.ia = imdb.IMDb()
+    self.ia = imdb.Cinemagoer()
+    # self.bs = bs4.BeautifulSoup
+    self.upcoming: list = []
+    self.watching: list = []
+    self.completed: list = []
     self.github = github.Github() if TOKEN == "TOKEN" else github.Github(TOKEN)
     colorama.init(autoreset=True)
   
@@ -44,48 +51,48 @@ class ShowList():
     """
     if isinstance(title, str):
       return [show for show in self.ia.search_movie(title, limit)]
+      # print(requests.get(f"https://www.imdb.com/find?q={title}&ref_=nv_sr_sm").text)
+      # return [show for show in requests.get(f"https://v2.sg.media-imdb.com/suggests/{title[0]}/{title}.json").json().get("d")]
+      # print()
+
     else:
       raise TypeError("Parameter 'title' must be string.")
 
+  #
+
   @time_execution
-  def remove_show(self, item: str | int, target: list | dict) -> int | None:
+  def add_title(self, title: str, titleList: str) -> None:
     """
-    Remove show method. This method will remove a show (item) from a list/dict (target).
-    :param item: The show to be removed.
-    :param target: The list/dict to be removed from.
-    :return: None 
+    add_title method. This method will add a title to the specified list.
+    :param title: The title to be added.
+    :param titleList: The list to add the title to.
+    :return: None
     """
-    if isinstance(target, (list, dict)):
-      if isinstance(item, int):
-        target.pop(item)
-        return 1
-      if (item not in target) or (item != target):
-        return None
-      target.pop(item)
+    if titleList == "upcoming":
+      self.upcoming.append(title)
+    elif titleList == "watching":
+      self.watching.append(title)
+    elif titleList == "completed":
+      self.completed.append(title)
     else:
-      raise TypeError("Parameter 'target' must be list or dict.")
-    return None
-  
+      raise ValueError("Invalid title list.")
+
   @time_execution
-  def add_show(self, item: str | int, target: list | dict) -> int | None:
+  def remove_title(self, title: str, titleList: str) -> None:
     """
-    Add show method. This method will add a show (item) to a list/dict (target).
-    :param item: The show to be added.
-    :param target: The list/dict to be added to.
-    :return: 1 if the item was added, 0 if the item was not added.
+    remove_title method. This method will remove a title from the specified list.
+    :param title: The title to be removed.
+    :param titleList: The list to remove the title from.
+    :return: None
     """
-    if isinstance(target, (list, dict)):
-      if isinstance(target, list):
-        if item in target:
-          return None
-        target.append(item)
-      elif isinstance(target, dict):
-        if (item in target) or (item == target):
-          return None
-        target = item
+    if titleList == "upcoming":
+      self.upcoming.remove(title)
+    elif titleList == "watching":
+      self.watching.remove(title)
+    elif titleList == "completed":
+      self.completed.remove(title)
     else:
-      raise TypeError("Parameter 'target' must be list or dict.")
-    return None
+      raise ValueError("Invalid title list.")
 
   @time_execution
   def up_to_date(self) -> bool | tuple | str:
@@ -141,7 +148,7 @@ class ShowList():
     """
     get_show_info method. This method will get the IMDB information for a show.
     :param titleID: The show to get the information for.
-    :param data: The data to get. (types: all [default], title, year, rating, etc.)
+    :param data: The data to get. (types: all[default], title, year, rating, etc.)
     :return: The data requested.
     """
     # if isinstance(show, str):
@@ -152,35 +159,61 @@ class ShowList():
     # else:
     #   raise TypeError("Parameter 'show' must be string or int.")
     info: dict = self.ia.get_movie(titleID)
-    match data:
-      case "all":
-        return info
-      case "title":
-        return info['title']
-      case "kind":
-        return info['kind']
-      case "year":
-        return info['year']
-      case "rating":
-        return info['rating']
-      case "votes":
-        return info['votes']
-      case "genres":
-        return info['genres']
-      case "plot":
-        return info['plot'][0]
-      case "cast":
-        return info['cast']
-      case "episodes":
-        return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
-      case "seasons":
-        if info['kind'] == 'movie':
-          raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
-        return info['number of seasons']
-      case "runtime":
-        pass
-      case "url":
-        return self.ia.get_imdbURL(info)
+    # match data:
+    #   case "title":
+    #     return info['title']
+    #   case "kind":
+    #     return info['kind']
+    #   case "year":
+    #     return info['year']
+    #   case "rating":
+    #     return info['rating']
+    #   case "votes":
+    #     return info['votes']
+    #   case "genres":
+    #     return info['genres']
+    #   case "plot":
+    #     return info['plot'][0]
+    #   case "cast":
+    #     return info['cast']
+    #   case "episodes":
+    #     return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
+    #   case "seasons":
+    #     if info['kind'] == 'movie':
+    #       raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
+    #     return info['number of seasons']
+    #   case "runtime":
+    #     pass
+    #   case "url":
+    #     return self.ia.get_imdbURL(info)
+    if data == "all":
+      return info.__dict__
+    elif data == "title":
+      return info['title']
+    elif data == "kind":
+      return info['kind']
+    elif data == "year":
+      return info['year']
+    elif data == "rating":
+      return info['rating']
+    elif data == "votes":
+      return info['votes']
+    elif data == "genres":
+      return info['genres']
+    elif data == "plot":
+      return info['plot'][0]
+    elif data == "cast":
+      return info['cast']
+    elif data == "episodes":
+      return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
+    elif data == "seasons":
+      if info['kind'] == 'movie':
+        raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
+      return info['number of seasons']
+    elif data == "runtime":
+      pass
+    elif data == "url":
+      return self.ia.get_imdbURL(info)
   
   def authenticated(self) -> bool:
     """

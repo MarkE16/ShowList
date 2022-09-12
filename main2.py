@@ -56,21 +56,49 @@ def intro() -> None:
 
 
 def getInput(dataType: str | int | float | bool, msg: str) -> str | int | float | bool:
-  match dataType:
-    case "str":
-      return str(input(msg))
-    case "int":
-      return int(input(msg))
-    case "float":
-      return float(input(msg))
-    case "bool":
-      return bool(input(msg))
-    case _:
-      raise TypeError("Invalid data type.")
+  # match dataType:
+  #   case "str":
+  #     return str(input(msg))
+  #   case "int":
+  #     return int(input(msg))
+  #   case "float":
+  #     return float(input(msg))
+  #   case "bool":
+  #     return bool(input(msg))
+  #   case _:
+  #     raise TypeError("Invalid data type.")
+  # convert the commented code into an if elif else statement
+  if dataType == "str":
+    return str(input(msg))
+  elif dataType == "int":
+    return int(input(msg))
+  elif dataType == "float":
+    return float(input(msg))
+  elif dataType == "bool":
+    return bool(input(msg))
+  else:
+    raise TypeError("Invalid data type.")
 
-def displayData(data: list) -> None:
-  # print(tabulate(data, tablefmt="fancy_grid"))
+def displayData(id: str) -> None:
+  data: dict = showList.get_show_info(id)['data']
+  episodes: int
+  seasons: int
+  if data['kind'] == "tv series":
+    episodes = showList.get_show_info(id, "episodes")
+    seasons = data['number of seasons']
+  else:
+    episodes = None
+    seasons = None
   print(data)
+  print(
+    f"{Fore.LIGHTBLUE_EX}Title:{Fore.RESET} {data['title']}\n"
+    f"{Fore.LIGHTBLUE_EX}Year:{Fore.RESET} {data['year']}\n"
+    f"{Fore.LIGHTBLUE_EX}Episodes:{Fore.RESET} {episodes} | {Fore.LIGHTBLUE_EX}Seasons:{Fore.RESET} {seasons}\n" if data['kind'] == "tv series" else ""
+    f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating']}/10\n"
+    f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']]}\n"
+    f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} {data['plot'][0]}\n"
+  )
+
 
 def searchTitle() -> None:
   subheading("Search a title")
@@ -84,9 +112,9 @@ def searchTitle() -> None:
   print()
   action: int = getInput("int", "Select a title to view more information: ")
   titleID: str = showList.getTitleID(results[action]["long imdb canonical title"])
-  info: dict = showList.ia.get_movie(titleID)
+  # info: dict = showList.ia.get_movie(titleID)
   print()
-  print(displayData(info))
+  displayData(titleID)
 
 
 def mainMenu() -> None:
