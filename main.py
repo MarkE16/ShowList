@@ -66,9 +66,9 @@ def checkForUpdates():
       "\r========================================================\n"
       f"{Fore.LIGHTYELLOW_EX}/!\{Fore.WHITE} A {Fore.YELLOW}new version{Fore.WHITE} is available!\n"
       ">>> Current version: " + str(showList.__version__) + " | Latest version: " + str(showList.up_to_date()[1]) + "\n"
-                                                                                                                    f"\nYou can download the latest version from: https://www.github.com/MarkE16/ShowList\n{Fore.RED}Note: Save data will not transfer, so you'll need to go into program's files and make a copy of the"
-                                                                                                                    f" data.json file, then transfer it to the new version. More information about updating on the Github page.{Fore.WHITE}\n"
-                                                                                                                    "========================================================\n"
+      f"\nYou can download the latest version from: https://www.github.com/MarkE16/ShowList\n{Fore.RED}Note: Save data will not transfer, so you'll need to go into program's files and make a copy of the"
+      f" data.json file, then transfer it to the new version. More information about updating on the Github page.{Fore.WHITE}\n"
+      "========================================================\n"
     )
   else:
     input(showList.up_to_date())

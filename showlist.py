@@ -5,6 +5,7 @@ from datetime import datetime
 from colorama import Fore
 from auth import *
 from time import time
+from github.GithubException import BadCredentialsException, RateLimitExceededException
 # import bs4, requests, json
 
 # Create a function that calculates the execution time of a function
@@ -33,6 +34,7 @@ class ShowList():
     self.__author__ = "Mark E"
     self.__description__ = "A program that allows you to keep track of shows you're watching."
     self.__copyright__ = "Copyright (c) 2021-2022 Mark E"
+    self.__repo__ = "https://github.com/MarkE16/ShowList"
     self.ia = imdb.Cinemagoer()
     # self.bs = bs4.BeautifulSoup
     self.upcoming: list = []
@@ -69,9 +71,9 @@ class ShowList():
     :return: None
     """
     if titleList == "upcoming":
-      self.upcoming.append(title)
+      self.upcoming.append({"title": title, "ep": 1 })
     elif titleList == "watching":
-      self.watching.append(title)
+      self.watching.append({"title": title, "ep": 1 })
     elif titleList == "completed":
       self.completed.append(title)
     else:
@@ -94,20 +96,30 @@ class ShowList():
     else:
       raise ValueError("Invalid title list.")
 
+
+  def fetchLatestVersion(self) -> str:
+    """
+    fetchLatestVersion method. This method will fetch the latest version of the program from GitHub.
+    :return: The latest version of the program.
+    """
+    return self.github.get_repo("MarkE16/ShowList").get_latest_release().tag_name
+
+
   @time_execution
-  def up_to_date(self) -> bool | tuple | str:
+  def up_to_date(self) -> bool | dict:
     """
     up_to_date method. This method will check if the current version of the program is up to date.
     :return: True if the program is up-to-date, False if it is not, and the version number of the latest version if it is not up to date as a tuple.
     """
-    ver = self.github.get_repo("MarkE16/ShowList").get_latest_release().tag_name
+    try:
+      ver = self.fetchLatestVersion()
+    except BadCredentialsException:
+      return {"error": "BadCredentialsException", "message": "The GitHub token is invalid."}
 
-    if "dev" in self.__version__:
-      return f"\r{Fore.RED}[DEV] This is currently the development version of {self.__version__[:len(self.__version__)-4]}, which is not yet ready for release, which ALSO technically means that, you're up to date.{Fore.WHITE}"
-    elif self.__version__ == ver:
+
+    if self.__version__ == ver:
       return True
-    return (False, ver)
-  
+    return False
   # Old Method, might be unused.
   # def update(self):
   #   """
