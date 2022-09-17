@@ -56,44 +56,57 @@ def intro() -> None:
 
 
 def getInput(dataType: str | int | float | bool, msg: str) -> str | int | float | bool:
-  # match dataType:
-  #   case "str":
-  #     return str(input(msg))
-  #   case "int":
-  #     return int(input(msg))
-  #   case "float":
-  #     return float(input(msg))
-  #   case "bool":
-  #     return bool(input(msg))
-  #   case _:
-  #     raise TypeError("Invalid data type.")
-  # convert the commented code into an if elif else statement
-  if dataType == "str":
-    return str(input(msg))
-  elif dataType == "int":
-    return int(input(msg))
-  elif dataType == "float":
-    return float(input(msg))
-  elif dataType == "bool":
-    return bool(input(msg))
-  else:
-    raise TypeError("Invalid data type.")
+  match dataType:
+    case "str":
+      return str(input(msg))
+    case "int":
+      return int(input(msg))
+    case "float":
+      return float(input(msg))
+    case "bool":
+      return bool(input(msg))
+    case _:
+      raise TypeError("Invalid data type.")
+  # if dataType == "str":
+  #   return str(input(msg))
+  # elif dataType == "int":
+  #   return int(input(msg))
+  # elif dataType == "float":
+  #   return float(input(msg))
+  # elif dataType == "bool":
+  #   return bool(input(msg))
+  # else:
+  #   raise TypeError("Invalid data type.")
+
 
 def displayData(id: str) -> None:
   data: dict = showList.get_show_info(id)['data']
-  episodes: int
-  seasons: int
+  episodes: int | None
+  seasons: int | None
+  runtime: int | None
+  hrs: float | None
+  mins: int | None
   if data['kind'] == "tv series":
     episodes = showList.get_show_info(id, "episodes")
     seasons = data['number of seasons']
+    runtime = None
+    hrs = None
+    mins = None
   else:
+    runtime = int(data['runtimes'][0])
+    hrs = runtime / 60
+    mins = runtime - (int(hrs) * 60)
     episodes = None
     seasons = None
   print(data)
+  subheading("Title information")
   print(
     f"{Fore.LIGHTBLUE_EX}Title:{Fore.RESET} {data['title']}\n"
-    f"{Fore.LIGHTBLUE_EX}Year:{Fore.RESET} {data['year']}\n"
-    f"{Fore.LIGHTBLUE_EX}Episodes:{Fore.RESET} {episodes} | {Fore.LIGHTBLUE_EX}Seasons:{Fore.RESET} {seasons}\n" if data['kind'] == "tv series" else ""
+    f"{Fore.LIGHTBLUE_EX}Year:{Fore.RESET} {data['year']}"
+  )
+  print(f"{Fore.LIGHTBLUE_EX}Episodes:{Fore.RESET} {episodes} | {Fore.LIGHTBLUE_EX}Seasons:{Fore.RESET} {seasons}" if
+    data['kind'] == "tv series" else f"{Fore.LIGHTBLUE_EX}Runtime:{Fore.RESET} {int(hrs)} hour(s) and {mins} minutes")
+  print(
     f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating']}/10\n"
     f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']]}\n"
     f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} {data['plot'][0]}\n"
