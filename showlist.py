@@ -63,7 +63,7 @@ class ShowList():
   #
 
   @time_execution
-  def add_title(self, title: str, titleList: str) -> None:
+  def add_title(self, title: str | dict, titleList: str) -> None:
     """
     add_title method. This method will add a title to the specified list.
     :param title: The title to be added.
@@ -80,7 +80,7 @@ class ShowList():
       raise ValueError("Invalid title list.")
 
   @time_execution
-  def remove_title(self, title: str, titleList: str) -> None:
+  def remove_title(self, title: str | dict, titleList: str) -> None:
     """
     remove_title method. This method will remove a title from the specified list.
     :param title: The title to be removed.

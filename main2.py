@@ -88,12 +88,18 @@ def getInput(dataType: str | int | float | bool, msg: str) -> str | int | float 
 
 
 def displayData(id: str) -> None:
-  data: dict = showList.get_show_info(id)['data']
+  try:
+    data: dict = showList.get_show_info(id)['data']
+  except IMDbDataAccessError as e:
+    printMsg("Error: Unable to connect to IMDb. ERR: " + str({"error": e}), "error")
+    return
+  watchingTitles: list = [title['title'] for title in showList.watching]
   episodes: int | None
   seasons: int | None
   runtime: int | None
   hrs: float | None
   mins: int | None
+  index: int = 0
   if data['kind'] == "tv series":
     episodes = showList.get_show_info(id, "episodes")
     seasons = data['number of seasons']
@@ -106,14 +112,17 @@ def displayData(id: str) -> None:
     mins = runtime - (int(hrs) * 60)
     episodes = None
     seasons = None
+  # ---
+  if data['title'] in watchingTitles:
+    index = watchingTitles.index(data['title'])
+
   subheading("Title information")
   print(
     f"{Fore.LIGHTBLUE_EX}Title:{Fore.RESET} {data['title']}\n"
     f"{Fore.LIGHTBLUE_EX}Year:{Fore.RESET} {data['year']}"
   )
-  print(f"{Fore.LIGHTBLUE_EX}Episodes:{Fore.RESET} {episodes} | {Fore.LIGHTBLUE_EX}Seasons:{Fore.RESET} {seasons}" if
-        data[
-          'kind'] == "tv series" else f"{Fore.LIGHTBLUE_EX}Runtime:{Fore.RESET} {int(hrs)} hour(s) and {mins} minutes")
+  print(f"{Fore.LIGHTBLUE_EX}Episodes:{Fore.RESET} {episodes} | {Fore.LIGHTBLUE_EX}Seasons:{Fore.RESET} {seasons}" + (f" | {Fore.LIGHTBLUE_EX}On Episode:{Fore.RESET} {showList.watching[index]['ep']}" if data['title'] in watchingTitles else "")
+        if data['kind'] == "tv series" else f"{Fore.LIGHTBLUE_EX}Runtime:{Fore.RESET} {int(hrs)} hour(s) and {mins} minutes")
   print(
     f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating']}/10\n"
     f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']]}\n"
@@ -126,14 +135,16 @@ def searchTitle() -> None:
   name: str = getInput("str", "Enter the title to search for: ")
   clear()
   subheading("Search results")
-  results: list = showList.search_show(name, 10)
-  # print(tabulate([title for title in results], headers="Title", tablefmt="fancy_grid"))
+  try:
+    results: list = showList.search_show(name, 10)
+  except IMDbDataAccessError as e:
+    printMsg("Error: Unable to connect to IMDb. ERR: " + str({"error": e}), "error")
+    return
   for index, title in enumerate(results):
     print(f"{Fore.LIGHTBLUE_EX}[{index}]{Fore.RESET} {title['long imdb canonical title']}")
   print()
-  action: int = getInput("int", "Select a title to view more information: ")
-  titleID: str = showList.getTitleID(results[action]["long imdb canonical title"])
-  # info: dict = showList.ia.get_movie(titleID)
+  selected: int = getInput("int", "Select a title to view more information: ")
+  titleID: str = showList.getTitleID(results[selected]["long imdb canonical title"])
   print()
   displayData(titleID)
   print("| [0] Add to list | [1] Go back |")
@@ -145,19 +156,33 @@ def searchTitle() -> None:
     clear()
     subheading("Add to list")
     print(
-      f"Where you do want to add '{Fore.LIGHTYELLOW_EX}{results[action]['long imdb canonical title']}{Fore.RESET}' to?")
+      f"Where you do want to add '{Fore.LIGHTYELLOW_EX}{results[selected]['long imdb canonical title']}{Fore.RESET}' to?")
     print("[0] Upcoming | [1] Watching | [2] Complete | [3] Back |")
     action: int = getInput("int", "Select an action: ")
     if action == 3:
       clear()
       return
     elif action == 0:
-      showList.add_title(results[action]['title'], "upcoming")
+      showList.add_title(results[selected]['title'], "upcoming")
     elif action == 1:
-      showList.add_title(results[action]['title'], "watching")
+      showList.add_title(results[selected]['title'], "watching")
     elif action == 2:
-      showList.add_title(results[action]['title'], "complete")
+      showList.add_title(results[selected]['title'], "completed")
     printMsg("Successfully added title to list.", "success")
+
+
+def viewList(l: str) -> int:
+  clear()
+  if l == "upcoming":
+    print(tabulate(showList.upcoming, headers="keys", tablefmt="fancy_grid", showindex="always"))
+  elif l == "watching":
+    print(tabulate(showList.watching, headers="keys", tablefmt="fancy_grid", showindex="always"))
+  elif l == "complete":
+    for i, title in enumerate(showList.completed):
+      print(f"{Fore.LIGHTBLUE_EX}[{i}]{Fore.RESET} {title}")
+  print()
+  action: int = getInput("int", "Select a title: ")
+  return action
 
 
 def viewUpcoming() -> None:
@@ -168,7 +193,55 @@ def viewUpcoming() -> None:
   print()
   print(tabulate(showList.upcoming, headers="keys", tablefmt="fancy_grid", showindex="always"))
   print()
-  input("| Press enter to continue |")
+  print("[0] View title | [1] Remove title | [2] Move title | [3] Back |")
+  action: int = getInput("int", "Select an action: ")
+  if action == 3:
+    clear()
+    return
+  elif action == 0:
+    clear()
+    displayData(showList.getTitleID(showList.upcoming[action]['title']))
+    input("[ENTER] Back |")
+    clear()
+    return
+  elif action == 1:
+    selectedTitleIndex: int = viewList("upcoming")
+    if selectedTitleIndex >= len(showList.upcoming) or selectedTitleIndex < 0:
+      printMsg("Invalid index.", "error")
+      return
+    clear()
+    subheading("Remove title")
+    print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.upcoming[selectedTitleIndex]['title']}{Fore.RESET}' from your upcoming list?")
+    print(f"[0] {Fore.LIGHTRED_EX}Yes{Fore.RESET} | [1] No |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 1:
+      clear()
+      return
+    elif action == 0:
+      showList.remove_title(showList.upcoming[selectedTitleIndex], "upcoming")
+      printMsg("Successfully removed title from list.", "success")
+      return
+  elif action == 2:
+    selectedTitleIndex: int = viewList("upcoming")
+    if selectedTitleIndex >= len(showList.upcoming) or selectedTitleIndex < 0:
+      printMsg("Invalid index.", "error")
+      return
+    clear()
+    subheading("Move title")
+    print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.upcoming[selectedTitleIndex]['title']}{Fore.RESET}' to?")
+    print("[0] Watching | [1] Complete | [2] Back |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 2:
+      clear()
+      return
+    elif action == 0:
+      showList.add_title(showList.upcoming[selectedTitleIndex]['title'], "watching")
+      showList.remove_title(showList.upcoming[selectedTitleIndex], "upcoming")
+    elif action == 1:
+      showList.add_title(showList.upcoming[selectedTitleIndex]['title'], "completed")
+      showList.remove_title(showList.upcoming[selectedTitleIndex], "upcoming")
+    printMsg("Successfully moved title.", "success")
+    return
 
 
 def viewWatching() -> None:
@@ -179,7 +252,56 @@ def viewWatching() -> None:
   print()
   print(tabulate(showList.watching, headers="keys", tablefmt="fancy_grid", showindex="always"))
   print()
-  input("| Press enter to continue |")
+  print("[0] View title | [1] Remove title | [2] Move title | [3] Back |")
+  action: int = getInput("int", "Select an action: ")
+  if action == 3:
+    clear()
+    return
+  elif action == 0:
+    clear()
+    subheading("Title information")
+    displayData(showList.getTitleID(showList.watching[action]['title']))
+    input("[ENTER] Back |")
+    clear()
+    return
+  elif action == 1:
+    selectedTitleIndex: int = viewList("watching")
+    if selectedTitleIndex >= len(showList.watching) or selectedTitleIndex < 0:
+      printMsg("Invalid index.", "error")
+      return
+    clear()
+    subheading("Remove title")
+    print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.watching[selectedTitleIndex]['title']}{Fore.RESET}' from your watching list?")
+    print(f"[0] {Fore.LIGHTRED_EX}Yes{Fore.RESET} | [1] No |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 1:
+      clear()
+      return
+    elif action == 0:
+      showList.remove_title(showList.watching[selectedTitleIndex], "watching")
+      printMsg("Successfully removed title from list.", "success")
+      return
+  elif action == 2:
+    selectedTitleIndex: int = viewList("watching")
+    if selectedTitleIndex >= len(showList.watching) or selectedTitleIndex < 0:
+      printMsg("Invalid index.", "error")
+      return
+    clear()
+    subheading("Move title")
+    print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.watching[selectedTitleIndex]['title']}{Fore.RESET}' to?")
+    print("[0] Upcoming | [1] Complete | [2] Back |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 2:
+      clear()
+      return
+    elif action == 0:
+      showList.add_title(showList.watching[selectedTitleIndex]['title'], "upcoming")
+      showList.remove_title(showList.watching[selectedTitleIndex], "watching")
+    elif action == 1:
+      showList.add_title(showList.watching[selectedTitleIndex]['title'], "completed")
+      showList.remove_title(showList.watching[selectedTitleIndex], "watching")
+    printMsg("Successfully moved title.", "success")
+    return
 
 
 def viewComplete() -> None:
@@ -189,9 +311,59 @@ def viewComplete() -> None:
   subheading("Complete shows")
   print()
   for i, show in enumerate(showList.completed):
-    print(f"{Fore.LIGHTBLUE_EX}[{i}]{Fore.RESET} {show['title']}")
+    print(f"{Fore.LIGHTBLUE_EX}[{i}]{Fore.RESET} {show}")
   print()
-  input("| Press enter to continue |")
+  print("[0] View title | [1] Remove title | [2] Move title | [3] Back |")
+  action: int = getInput("int", "Select an action: ")
+  if action == 3:
+    clear()
+    return
+  elif action == 0:
+    clear()
+    subheading("Title information")
+    displayData(showList.getTitleID(showList.completed[action]['title']))
+    input("[ENTER] Back |")
+    clear()
+    return
+  elif action == 1:
+    selectedTitleIndex: int = viewList("complete")
+    if selectedTitleIndex >= len(showList.completed) or selectedTitleIndex < 0:
+      printMsg("Invalid index.", "error")
+      return
+    clear()
+    subheading("Remove title")
+    print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]}{Fore.RESET}' from your complete list?")
+    print(f"[0] {Fore.LIGHTRED_EX}Yes{Fore.RESET} | [1] No |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 1:
+      clear()
+      return
+    elif action == 0:
+      showList.remove_title(showList.completed[selectedTitleIndex], "completed")
+      printMsg("Successfully removed title from list.", "success")
+      return
+  elif action == 2:
+    selectedTitleIndex: int = viewList("complete")
+    if selectedTitleIndex >= len(showList.completed) or selectedTitleIndex < 0:
+      printMsg("Invalid index.", "error")
+      return
+    clear()
+    subheading("Move title")
+    print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]}{Fore.RESET}' to?")
+    print("[0] Upcoming | [1] Watching | [2] Back |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 2:
+      clear()
+      return
+    elif action == 0:
+      showList.add_title(showList.completed[selectedTitleIndex], "upcoming")
+      showList.remove_title(showList.completed[selectedTitleIndex], "completed")
+    elif action == 1:
+      showList.add_title(showList.completed[selectedTitleIndex], "watching")
+      showList.remove_title(showList.completed[selectedTitleIndex], "completed")
+    printMsg("Successfully moved title.", "success")
+    return
+
 
 
 def checkForUpdates() -> None:
