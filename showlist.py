@@ -1,12 +1,9 @@
-from __future__ import annotations
-
-import imdb, github, colorama
+import json
+import imdb, github
 from datetime import datetime
-from colorama import Fore
 from auth import *
 from time import time
 from github.GithubException import BadCredentialsException, RateLimitExceededException
-# import bs4, requests, json
 
 # Create a function that calculates the execution time of a function
 def time_execution(func):
@@ -14,7 +11,7 @@ def time_execution(func):
         start = time()
         result = func(*args, **kwargs)
         end = time()
-        print(f"Execution time: {round(end - start, 2)} seconds")
+        print(f"Execution time: {round(end - start, 2)} seconds for function {func.__name__} | Parameters for this function: {args}")
         return result
     return wrapper
 
@@ -41,8 +38,18 @@ class ShowList():
     self.watching: list = []
     self.completed: list = []
     self.github = github.Github() if TOKEN == "TOKEN" else github.Github(TOKEN)
-    colorama.init(autoreset=True)
-  
+
+  def load(self) -> None:
+    """
+    load method. This method will load the data from the data file.
+    :return: None
+    """
+    with open("data2.json", "r") as f:
+      data = json.load(f)
+      self.upcoming = data["upcoming"]
+      self.watching = data["watching"]
+      self.completed = data["completed"]
+
   @time_execution
   def search_show(self, title: str, limit:int=10) -> list:
     """
@@ -71,11 +78,17 @@ class ShowList():
     :return: None
     """
     if titleList == "upcoming":
-      self.upcoming.append({"title": title, "ep": 1 })
+      if title in [show["title"] for show in self.upcoming]:
+        raise ValueError("Title already exists in the list.")
+      self.upcoming.append({"title": title, "ep": 1, "status": "Upcoming"})
     elif titleList == "watching":
-      self.watching.append({"title": title, "ep": 1 })
+      if title in [show["title"] for show in self.watching]:
+        raise ValueError("Title already exists in the list.")
+      self.watching.append({"title": title, "ep": 1, "status": "Watching"})
     elif titleList == "completed":
-      self.completed.append(title)
+      if title in self.completed:
+        raise ValueError("Title already exists in the list.")
+      self.completed.append({"title": title})
     else:
       raise ValueError("Invalid title list.")
 
@@ -171,61 +184,63 @@ class ShowList():
     # else:
     #   raise TypeError("Parameter 'show' must be string or int.")
     info: dict = self.ia.get_movie(titleID)
-    # match data:
-    #   case "title":
-    #     return info['title']
-    #   case "kind":
-    #     return info['kind']
-    #   case "year":
-    #     return info['year']
-    #   case "rating":
-    #     return info['rating']
-    #   case "votes":
-    #     return info['votes']
-    #   case "genres":
-    #     return info['genres']
-    #   case "plot":
-    #     return info['plot'][0]
-    #   case "cast":
-    #     return info['cast']
-    #   case "episodes":
-    #     return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
-    #   case "seasons":
-    #     if info['kind'] == 'movie':
-    #       raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
-    #     return info['number of seasons']
-    #   case "runtime":
-    #     pass
-    #   case "url":
-    #     return self.ia.get_imdbURL(info)
-    if data == "all":
-      return info.__dict__
-    elif data == "title":
-      return info['title']
-    elif data == "kind":
-      return info['kind']
-    elif data == "year":
-      return info['year']
-    elif data == "rating":
-      return info['rating']
-    elif data == "votes":
-      return info['votes']
-    elif data == "genres":
-      return info['genres']
-    elif data == "plot":
-      return info['plot'][0]
-    elif data == "cast":
-      return info['cast']
-    elif data == "episodes":
-      return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
-    elif data == "seasons":
-      if info['kind'] == 'movie':
-        raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
-      return info['number of seasons']
-    elif data == "runtime":
-      pass
-    elif data == "url":
-      return self.ia.get_imdbURL(info)
+    match data:
+      case "all":
+        return info.__dict__
+      case "title":
+        return info['title']
+      case "kind":
+        return info['kind']
+      case "year":
+        return info['year']
+      case "rating":
+        return info['rating']
+      case "votes":
+        return info['votes']
+      case "genres":
+        return info['genres']
+      case "plot":
+        return info['plot'][0]
+      case "cast":
+        return info['cast']
+      case "episodes":
+        return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
+      case "seasons":
+        if info['kind'] == 'movie':
+          raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
+        return info['number of seasons']
+      case "runtime":
+        pass
+      case "url":
+        return self.ia.get_imdbURL(info)
+    # if data == "all":
+    #   return info.__dict__
+    # elif data == "title":
+    #   return info['title']
+    # elif data == "kind":
+    #   return info['kind']
+    # elif data == "year":
+    #   return info['year']
+    # elif data == "rating":
+    #   return info['rating']
+    # elif data == "votes":
+    #   return info['votes']
+    # elif data == "genres":
+    #   return info['genres']
+    # elif data == "plot":
+    #   return info['plot'][0]
+    # elif data == "cast":
+    #   return info['cast']
+    # elif data == "episodes":
+    #   return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
+    # elif data == "seasons":
+    #   if info['kind'] == 'movie':
+    #     raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
+    #   return info['number of seasons']
+    # elif data == "runtime":
+    #   pass
+    # elif data == "url":
+    #   return self.ia.get_imdbURL(info)
   
   def authenticated(self) -> bool:
     """

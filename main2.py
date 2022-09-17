@@ -68,11 +68,20 @@ def getInput(dataType: str | int | float | bool, msg: str) -> str | int | float 
     case "str":
       return str(input(msg))
     case "int":
-      return int(input(msg))
+      try:
+        return int(input(msg))
+      except ValueError:
+        printMsg("Error: Invalid input. Please enter a valid integer.", "error")
     case "float":
-      return float(input(msg))
+      try:
+        return float(input(msg))
+      except ValueError:
+        printMsg("Error: Invalid input. Please enter a valid float.", "error")
     case "bool":
-      return bool(input(msg))
+      try:
+        return bool(input(msg))
+      except ValueError:
+        printMsg("Error: Invalid input. Please enter a valid boolean.", "error")
     case _:
       raise TypeError("Invalid data type.")
   # if dataType == "str":
@@ -93,13 +102,17 @@ def displayData(id: str) -> None:
   except IMDbDataAccessError as e:
     printMsg("Error: Unable to connect to IMDb. ERR: " + str({"error": e}), "error")
     return
+  upcomingTitles: list = [title['title'] for title in showList.upcoming]
   watchingTitles: list = [title['title'] for title in showList.watching]
+  completedTitles: list = showList.completed
   episodes: int | None
   seasons: int | None
   runtime: int | None
   hrs: float | None
   mins: int | None
   index: int = 0
+  inList: str = f"{Fore.LIGHTGREEN_EX}√{Fore.RESET}"
+  notInList: str = f"{Fore.LIGHTRED_EX}X{Fore.RESET}"
   if data['kind'] == "tv series":
     episodes = showList.get_show_info(id, "episodes")
     seasons = data['number of seasons']
@@ -119,6 +132,7 @@ def displayData(id: str) -> None:
   subheading("Title information")
   print(
     f"{Fore.LIGHTBLUE_EX}Title:{Fore.RESET} {data['title']}\n"
+    f"{Fore.LIGHTBLUE_EX}Title Type:{Fore.RESET} {data['kind']}\n"
     f"{Fore.LIGHTBLUE_EX}Year:{Fore.RESET} {data['year']}"
   )
   print(f"{Fore.LIGHTBLUE_EX}Episodes:{Fore.RESET} {episodes} | {Fore.LIGHTBLUE_EX}Seasons:{Fore.RESET} {seasons}" + (f" | {Fore.LIGHTBLUE_EX}On Episode:{Fore.RESET} {showList.watching[index]['ep']}" if data['title'] in watchingTitles else "")
@@ -126,8 +140,13 @@ def displayData(id: str) -> None:
   print(
     f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating']}/10\n"
     f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']]}\n"
-    f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} {data['plot'][0]}\n"
+    f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} {data['plot'][0]}\n" if 'plot' in data.keys() else (
+      f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating']}/10\n"
+      f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']]}\n"
+      f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} No plot available.\n"
+    )
   )
+  print(f"[{inList if data['title'] in upcomingTitles else notInList}] Upcoming | [{inList if data['title'] in watchingTitles else notInList}] Watching | [{inList if data['title'] in completedTitles else notInList}] Complete")
 
 
 def searchTitle() -> None:
@@ -139,6 +158,9 @@ def searchTitle() -> None:
     results: list = showList.search_show(name, 10)
   except IMDbDataAccessError as e:
     printMsg("Error: Unable to connect to IMDb. ERR: " + str({"error": e}), "error")
+    return
+  if len(results) == 0:
+    printMsg("No results found. Try checking for any typos. Example searches: 'Spiderman', 'Demon Slayer', 'Cars'", "warning")
     return
   for index, title in enumerate(results):
     print(f"{Fore.LIGHTBLUE_EX}[{index}]{Fore.RESET} {title['long imdb canonical title']}")
@@ -163,11 +185,23 @@ def searchTitle() -> None:
       clear()
       return
     elif action == 0:
-      showList.add_title(results[selected]['title'], "upcoming")
+      try:
+        showList.add_title(results[selected]['title'], "upcoming")
+      except ValueError:
+        printMsg("Error: Title already exists in list.", "error")
+        return
     elif action == 1:
-      showList.add_title(results[selected]['title'], "watching")
+      try:
+        showList.add_title(results[selected]['title'], "watching")
+      except ValueError:
+        printMsg("Error: Title already exists in list.", "error")
+        return
     elif action == 2:
-      showList.add_title(results[selected]['title'], "completed")
+      try:
+        showList.add_title(results[selected]['title'], "completed")
+      except ValueError:
+        printMsg("Error: Title already exists in list.", "error")
+        return
     printMsg("Successfully added title to list.", "success")
 
 
@@ -178,8 +212,7 @@ def viewList(l: str) -> int:
   elif l == "watching":
     print(tabulate(showList.watching, headers="keys", tablefmt="fancy_grid", showindex="always"))
   elif l == "complete":
-    for i, title in enumerate(showList.completed):
-      print(f"{Fore.LIGHTBLUE_EX}[{i}]{Fore.RESET} {title}")
+    print(tabulate(showList.completed, headers="keys", tablefmt="fancy_grid", showindex="always"))
   print()
   action: int = getInput("int", "Select a title: ")
   return action
@@ -198,17 +231,17 @@ def viewUpcoming() -> None:
   if action == 3:
     clear()
     return
-  elif action == 0:
+  selectedTitleIndex: int = viewList("upcoming")
+  if selectedTitleIndex >= len(showList.upcoming) or selectedTitleIndex < 0:
+    printMsg("Invalid index.", "error")
+    return
+  if action == 0:
     clear()
-    displayData(showList.getTitleID(showList.upcoming[action]['title']))
+    displayData(showList.getTitleID(showList.upcoming[selectedTitleIndex]['title']))
     input("[ENTER] Back |")
     clear()
     return
   elif action == 1:
-    selectedTitleIndex: int = viewList("upcoming")
-    if selectedTitleIndex >= len(showList.upcoming) or selectedTitleIndex < 0:
-      printMsg("Invalid index.", "error")
-      return
     clear()
     subheading("Remove title")
     print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.upcoming[selectedTitleIndex]['title']}{Fore.RESET}' from your upcoming list?")
@@ -222,10 +255,6 @@ def viewUpcoming() -> None:
       printMsg("Successfully removed title from list.", "success")
       return
   elif action == 2:
-    selectedTitleIndex: int = viewList("upcoming")
-    if selectedTitleIndex >= len(showList.upcoming) or selectedTitleIndex < 0:
-      printMsg("Invalid index.", "error")
-      return
     clear()
     subheading("Move title")
     print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.upcoming[selectedTitleIndex]['title']}{Fore.RESET}' to?")
@@ -257,18 +286,18 @@ def viewWatching() -> None:
   if action == 3:
     clear()
     return
-  elif action == 0:
+  selectedTitleIndex: int = viewList("watching")
+  if selectedTitleIndex >= len(showList.watching) or selectedTitleIndex < 0:
+    printMsg("Invalid index.", "error")
+    return
+  if action == 0:
     clear()
     subheading("Title information")
-    displayData(showList.getTitleID(showList.watching[action]['title']))
+    displayData(showList.getTitleID(showList.watching[selectedTitleIndex]['title']))
     input("[ENTER] Back |")
     clear()
     return
   elif action == 1:
-    selectedTitleIndex: int = viewList("watching")
-    if selectedTitleIndex >= len(showList.watching) or selectedTitleIndex < 0:
-      printMsg("Invalid index.", "error")
-      return
     clear()
     subheading("Remove title")
     print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.watching[selectedTitleIndex]['title']}{Fore.RESET}' from your watching list?")
@@ -282,10 +311,6 @@ def viewWatching() -> None:
       printMsg("Successfully removed title from list.", "success")
       return
   elif action == 2:
-    selectedTitleIndex: int = viewList("watching")
-    if selectedTitleIndex >= len(showList.watching) or selectedTitleIndex < 0:
-      printMsg("Invalid index.", "error")
-      return
     clear()
     subheading("Move title")
     print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.watching[selectedTitleIndex]['title']}{Fore.RESET}' to?")
@@ -310,26 +335,25 @@ def viewComplete() -> None:
     return
   subheading("Complete shows")
   print()
-  for i, show in enumerate(showList.completed):
-    print(f"{Fore.LIGHTBLUE_EX}[{i}]{Fore.RESET} {show}")
+  print(tabulate(showList.completed, headers="keys", tablefmt="fancy_grid", showindex="always"))
   print()
   print("[0] View title | [1] Remove title | [2] Move title | [3] Back |")
   action: int = getInput("int", "Select an action: ")
   if action == 3:
     clear()
     return
-  elif action == 0:
+  selectedTitleIndex: int = viewList("complete")
+  if selectedTitleIndex >= len(showList.completed) or selectedTitleIndex < 0:
+    printMsg("Invalid index.", "error")
+    return
+  if action == 0:
     clear()
     subheading("Title information")
-    displayData(showList.getTitleID(showList.completed[action]['title']))
+    displayData(showList.getTitleID(showList.completed[selectedTitleIndex]['title']))
     input("[ENTER] Back |")
     clear()
     return
   elif action == 1:
-    selectedTitleIndex: int = viewList("complete")
-    if selectedTitleIndex >= len(showList.completed) or selectedTitleIndex < 0:
-      printMsg("Invalid index.", "error")
-      return
     clear()
     subheading("Remove title")
     print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]}{Fore.RESET}' from your complete list?")
@@ -343,10 +367,6 @@ def viewComplete() -> None:
       printMsg("Successfully removed title from list.", "success")
       return
   elif action == 2:
-    selectedTitleIndex: int = viewList("complete")
-    if selectedTitleIndex >= len(showList.completed) or selectedTitleIndex < 0:
-      printMsg("Invalid index.", "error")
-      return
     clear()
     subheading("Move title")
     print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]}{Fore.RESET}' to?")
@@ -356,10 +376,10 @@ def viewComplete() -> None:
       clear()
       return
     elif action == 0:
-      showList.add_title(showList.completed[selectedTitleIndex], "upcoming")
+      showList.add_title(showList.completed[selectedTitleIndex]['title'], "upcoming")
       showList.remove_title(showList.completed[selectedTitleIndex], "completed")
     elif action == 1:
-      showList.add_title(showList.completed[selectedTitleIndex], "watching")
+      showList.add_title(showList.completed[selectedTitleIndex]['title'], "watching")
       showList.remove_title(showList.completed[selectedTitleIndex], "completed")
     printMsg("Successfully moved title.", "success")
     return
@@ -405,6 +425,10 @@ def programInfo() -> None:
     checkForUpdates()
 
 def mainMenu() -> None:
+  try:
+    showList.load()
+  except FileNotFoundError:
+    print("Failed to load data. The file 'data2.json' does not exist. Please create it in the root directory of the program.")
   while True:
     print(
       f"{Fore.LIGHTBLUE_EX}Select an option to get started{Fore.RESET}\n"

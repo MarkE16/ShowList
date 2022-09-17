@@ -1,0 +1,11 @@
+{
+  "upcoming": [
+    {"title": "Demon Slayer: Kimetsu no Yaiba", "ep": 1, "status": "Upcoming"}
+  ],
+  "watching": [
+    {"title": "One Piece", "ep": 1, "status": "Watching"}
+  ],
+  "completed": [
+    {"title": "Boku no Hero Academia"}
+  ]
+}
