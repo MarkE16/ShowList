@@ -22,16 +22,13 @@ def timeex(func):
 
 clear = lambda: os.system("cls")
 
-guestShowsToWatch = []
-guestShowsWatching = []
-guestCompletedShows = []
-guestSettings = {"MaxResults": 10, "PlotPreview": False}
-accounts = []
-increment = 0
-selectedSearchedShow = None
+episodes: int | None
+seasons: int | None
+runtime: int | None
+hrs: float | None
+mins: int | None
 showList = ShowList()  # Initialize the Show List class
 statuses = ["Watching", "Complete", "Paused", "Dropped", "Uncertain", "Waiting"]
-name: str = ""
 colorama.init(autoreset=True)
 
 
@@ -50,6 +47,8 @@ def printMsg(msg: str, type: str = "success"):
     print(f"[{Fore.LIGHTRED_EX}ERROR{Fore.RESET}] {msg}")
   elif type == "warning":
     print(f"[{Fore.LIGHTYELLOW_EX}WARNING{Fore.RESET}] {msg}")
+  elif type == "info":
+    print(f"[{Fore.LIGHTBLUE_EX}INFO{Fore.RESET}] {msg}")
 
 
 def intro() -> None:
@@ -72,16 +71,19 @@ def getInput(dataType: str | int | float | bool, msg: str) -> str | int | float 
         return int(input(msg))
       except ValueError:
         printMsg("Error: Invalid input. Please enter a valid integer.", "error")
+        return -1
     case "float":
       try:
         return float(input(msg))
       except ValueError:
         printMsg("Error: Invalid input. Please enter a valid float.", "error")
+        return -1
     case "bool":
       try:
         return bool(input(msg))
       except ValueError:
         printMsg("Error: Invalid input. Please enter a valid boolean.", "error")
+        return -1
     case _:
       raise TypeError("Invalid data type.")
   # if dataType == "str":
@@ -97,19 +99,16 @@ def getInput(dataType: str | int | float | bool, msg: str) -> str | int | float 
 
 
 def displayData(id: str) -> None:
+  global hrs, seasons, mins, episodes
   try:
     data: dict = showList.get_show_info(id)['data']
   except IMDbDataAccessError as e:
     printMsg("Error: Unable to connect to IMDb. ERR: " + str({"error": e}), "error")
     return
+  dataKeys = data.keys()
   upcomingTitles: list = [title['title'] for title in showList.upcoming]
   watchingTitles: list = [title['title'] for title in showList.watching]
   completedTitles: list = showList.completed
-  episodes: int | None
-  seasons: int | None
-  runtime: int | None
-  hrs: float | None
-  mins: int | None
   index: int = 0
   inList: str = f"{Fore.LIGHTGREEN_EX}√{Fore.RESET}"
   notInList: str = f"{Fore.LIGHTRED_EX}X{Fore.RESET}"
@@ -120,11 +119,12 @@ def displayData(id: str) -> None:
     hrs = None
     mins = None
   else:
-    runtime = int(data['runtimes'][0])
-    hrs = runtime / 60
-    mins = runtime - (int(hrs) * 60)
-    episodes = None
-    seasons = None
+    if "runtimes" in data.keys():
+      runtime = int(data['runtimes'][0])
+      hrs = runtime / 60
+      mins = runtime - (int(hrs) * 60)
+      episodes = None
+      seasons = None
   # ---
   if data['title'] in watchingTitles:
     index = watchingTitles.index(data['title'])
@@ -132,19 +132,15 @@ def displayData(id: str) -> None:
   subheading("Title information")
   print(
     f"{Fore.LIGHTBLUE_EX}Title:{Fore.RESET} {data['title']}\n"
-    f"{Fore.LIGHTBLUE_EX}Title Type:{Fore.RESET} {data['kind']}\n"
+    f"{Fore.LIGHTBLUE_EX}Title Type:{Fore.RESET} {data['kind'].capitalize()}\n"
     f"{Fore.LIGHTBLUE_EX}Year:{Fore.RESET} {data['year']}"
   )
   print(f"{Fore.LIGHTBLUE_EX}Episodes:{Fore.RESET} {episodes} | {Fore.LIGHTBLUE_EX}Seasons:{Fore.RESET} {seasons}" + (f" | {Fore.LIGHTBLUE_EX}On Episode:{Fore.RESET} {showList.watching[index]['ep']}" if data['title'] in watchingTitles else "")
-        if data['kind'] == "tv series" else f"{Fore.LIGHTBLUE_EX}Runtime:{Fore.RESET} {int(hrs)} hour(s) and {mins} minutes")
+        if data['kind'] == "tv series" else f"{Fore.LIGHTBLUE_EX}Runtime:{Fore.RESET} {int(hrs)} hour(s) and {mins} minutes"if "runtimes" in dataKeys else f"{Fore.LIGHTBLUE_EX}Runtime:{Fore.RESET} No Data Available.")
   print(
-    f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating']}/10\n"
-    f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']]}\n"
-    f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} {data['plot'][0]}\n" if 'plot' in data.keys() else (
-      f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating']}/10\n"
-      f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']]}\n"
-      f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} No plot available.\n"
-    )
+    f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating'] if 'rating' in dataKeys else '?'}/10\n"
+    f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']] if 'genres' in dataKeys else 'No Genres Listed.'}\n"
+    f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} {data['plot'][0] if 'plot' in dataKeys else 'No Plot Available.'}\n"
   )
   print(f"[{inList if data['title'] in upcomingTitles else notInList}] Upcoming | [{inList if data['title'] in watchingTitles else notInList}] Watching | [{inList if data['title'] in completedTitles else notInList}] Complete")
 
@@ -155,7 +151,7 @@ def searchTitle() -> None:
   clear()
   subheading("Search results")
   try:
-    results: list = showList.search_show(name, 10)
+    results: list = showList.search_show(name, showList.searchLimit)
   except IMDbDataAccessError as e:
     printMsg("Error: Unable to connect to IMDb. ERR: " + str({"error": e}), "error")
     return
@@ -165,6 +161,7 @@ def searchTitle() -> None:
   for index, title in enumerate(results):
     print(f"{Fore.LIGHTBLUE_EX}[{index}]{Fore.RESET} {title['long imdb canonical title']}")
   print()
+  printMsg("Results displayed: " + str(len(results)) + "/" + str(showList.searchLimit), "info")
   selected: int = getInput("int", "Select a title to view more information: ")
   titleID: str = showList.getTitleID(results[selected]["long imdb canonical title"])
   print()
@@ -260,8 +257,7 @@ def viewUpcoming() -> None:
     print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.upcoming[selectedTitleIndex]['title']}{Fore.RESET}' to?")
     print("[0] Watching | [1] Complete | [2] Back |")
     action: int = getInput("int", "Select an action: ")
-    if action == 2:
-      clear()
+    if action == 2 or action == -1:
       return
     elif action == 0:
       showList.add_title(showList.upcoming[selectedTitleIndex]['title'], "watching")
@@ -316,8 +312,7 @@ def viewWatching() -> None:
     print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.watching[selectedTitleIndex]['title']}{Fore.RESET}' to?")
     print("[0] Upcoming | [1] Complete | [2] Back |")
     action: int = getInput("int", "Select an action: ")
-    if action == 2:
-      clear()
+    if action == 2 or action == -1:
       return
     elif action == 0:
       showList.add_title(showList.watching[selectedTitleIndex]['title'], "upcoming")
@@ -356,7 +351,7 @@ def viewComplete() -> None:
   elif action == 1:
     clear()
     subheading("Remove title")
-    print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]}{Fore.RESET}' from your complete list?")
+    print(f"Are you sure you want to remove '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]['title']}{Fore.RESET}' from your complete list?")
     print(f"[0] {Fore.LIGHTRED_EX}Yes{Fore.RESET} | [1] No |")
     action: int = getInput("int", "Select an action: ")
     if action == 1:
@@ -372,8 +367,7 @@ def viewComplete() -> None:
     print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]}{Fore.RESET}' to?")
     print("[0] Upcoming | [1] Watching | [2] Back |")
     action: int = getInput("int", "Select an action: ")
-    if action == 2:
-      clear()
+    if action == 2 or action == -1:
       return
     elif action == 0:
       showList.add_title(showList.completed[selectedTitleIndex]['title'], "upcoming")
@@ -424,6 +418,28 @@ def programInfo() -> None:
   elif action == 0:
     checkForUpdates()
 
+
+def settings() -> None:
+  subheading("Settings")
+  print(f"{Fore.LIGHTBLUE_EX}Search Limit:{Fore.RESET} {showList.searchLimit}")
+  print(f"{Fore.LIGHTBLUE_EX}Hints:{Fore.RESET} {showList.hints}")
+  print()
+  print("[0] Change search limit | [1] Toggle hints | [2] Go back |")
+  action: int = getInput("int", "Select an action: ")
+  if action == 2:
+    clear()
+    return
+  elif action == 0:
+    limit: int = getInput("int", "Enter a new search limit: ")
+    if limit < 1:
+      printMsg("Invalid search limit.", "error")
+      return
+    showList.set_limit(limit)
+    printMsg("Successfully changed search limit.", "success")
+  elif action == 1:
+    showList.toggle_hints()
+    printMsg("Successfully toggled hints.", "success")
+
 def mainMenu() -> None:
   try:
     showList.load()
@@ -437,7 +453,8 @@ def mainMenu() -> None:
       f"{Fore.LIGHTBLUE_EX}[2]{Fore.RESET} View Watching - View what you're currently watching.\n"
       f"{Fore.LIGHTBLUE_EX}[3]{Fore.RESET} View Completed - View what you've completed.\n"
       f"{Fore.LIGHTBLUE_EX}[4]{Fore.RESET} Program Information - Basic Information about the program.\n"
-      f"{Fore.LIGHTBLUE_EX}[5]{Fore.RESET} Exit - Exit the program.\n"
+      f"{Fore.LIGHTBLUE_EX}[5]{Fore.RESET} Settings - Alter how the program functions.\n"
+      f"{Fore.LIGHTBLUE_EX}[6]{Fore.RESET} Exit - Exit the program.\n"
     )
     action: int = getInput("int", "> ")
     if action == 0:
@@ -451,6 +468,8 @@ def mainMenu() -> None:
     elif action == 4:
       programInfo()
     elif action == 5:
+      settings()
+    elif action == 6:
       exit(0)
 
 

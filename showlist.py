@@ -37,6 +37,8 @@ class ShowList():
     self.upcoming: list = []
     self.watching: list = []
     self.completed: list = []
+    self.searchLimit = 10
+    self.hints = True
     self.github = github.Github() if TOKEN == "TOKEN" else github.Github(TOKEN)
 
   def load(self) -> None:
@@ -49,6 +51,25 @@ class ShowList():
       self.upcoming = data["upcoming"]
       self.watching = data["watching"]
       self.completed = data["completed"]
+
+
+  def set_limit(self, newLimit: int) -> None:
+    """
+    set_limit method. This method will set the search limit.
+    :param newLimit: The new search limit.
+    :return: None
+    """
+    self.searchLimit = newLimit
+
+
+  def toggle_hints(self) -> None:
+    """
+    toggle_hints method. This method will toggle the hints.
+    :return: None
+    """
+    self.hints = not self.hints
+
+
 
   @time_execution
   def search_show(self, title: str, limit:int=10) -> list:
