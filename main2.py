@@ -28,7 +28,7 @@ runtime: int | None
 hrs: float | None
 mins: int | None
 showList = ShowList()  # Initialize the Show List class
-statuses = ["Watching", "Complete", "Paused", "Dropped", "Uncertain", "Waiting"]
+statuses = ["Upcoming", "Watching", "Complete", "Paused", "Dropped", "Uncertain", "Waiting"]
 colorama.init(autoreset=True)
 
 
@@ -108,18 +108,18 @@ def displayData(id: str) -> None:
   dataKeys = data.keys()
   upcomingTitles: list = [title['title'] for title in showList.upcoming]
   watchingTitles: list = [title['title'] for title in showList.watching]
-  completedTitles: list = showList.completed
+  completedTitles: list = [title['title'] for title in showList.completed]
   index: int = 0
   inList: str = f"{Fore.LIGHTGREEN_EX}√{Fore.RESET}"
   notInList: str = f"{Fore.LIGHTRED_EX}X{Fore.RESET}"
   if data['kind'] == "tv series":
     episodes = showList.get_show_info(id, "episodes")
-    seasons = data['number of seasons']
+    seasons = data['number of seasons'] if 'number of seasons' in dataKeys else None
     runtime = None
     hrs = None
     mins = None
   else:
-    if "runtimes" in data.keys():
+    if "runtimes" in dataKeys:
       runtime = int(data['runtimes'][0])
       hrs = runtime / 60
       mins = runtime - (int(hrs) * 60)
@@ -211,8 +211,45 @@ def viewList(l: str) -> int:
   elif l == "complete":
     print(tabulate(showList.completed, headers="keys", tablefmt="fancy_grid", showindex="always"))
   print()
-  action: int = getInput("int", "Select a title: ")
-  return action
+  return getInput("int", "Select a title: ")
+
+def changeEpisode(l: str, index: int) -> None:
+  newEpisode: int = getInput("int", "Enter the new episode: ")
+  confirm: str = getInput("str",
+                          "Are you sure you want to change the current episode to '" + str(newEpisode) + "'? [y/n]: ")
+  while confirm != "y" or (confirm != "n" and confirm != "y"):
+    newEpisode: int = getInput("int", "Enter the new episode: ")
+    confirm = getInput("str",
+                       "Are you sure you want to change the current episode to '" + str(newEpisode) + "'? [y/n]: ")
+  if confirm == "y":
+    if l == "upcoming":
+      showList.upcoming[index]['ep'] = newEpisode
+    elif l == "watching":
+      showList.watching[index]['ep'] = newEpisode
+    elif l == "complete":
+      showList.completed[index]['ep'] = newEpisode
+    printMsg("Successfully changed current episode.", "success")
+    return
+  elif confirm == "n":
+    return
+
+
+def changeStatus(l: str, index: int) -> None:
+  print("Statuses: " + str(statuses))
+  newStatus: str = getInput("str", "Enter the new status (e.g the name. Not case-sensitive): ")
+  if newStatus.capitalize() not in statuses:
+    printMsg("Invalid status.", "error")
+    return
+  elif newStatus.capitalize() == showList.upcoming[index]['status']:
+    printMsg("That is already the status.", "error")
+    return
+  if l == "upcoming":
+    showList.upcoming[index]['status'] = newStatus.capitalize()
+  elif l == "watching":
+    showList.watching[index]['status'] = newStatus.capitalize()
+  elif l == "complete":
+    showList.completed[index]['status'] = newStatus.capitalize()
+  printMsg("Successfully changed status.", "success")
 
 
 def viewUpcoming() -> None:
@@ -223,9 +260,9 @@ def viewUpcoming() -> None:
   print()
   print(tabulate(showList.upcoming, headers="keys", tablefmt="fancy_grid", showindex="always"))
   print()
-  print("[0] View title | [1] Remove title | [2] Move title | [3] Back |")
+  print("[0] View title | [1] Remove title | [2] Move title | [3] Edit title | [4] Back |")
   action: int = getInput("int", "Select an action: ")
-  if action == 3:
+  if action == 4:
     clear()
     return
   selectedTitleIndex: int = viewList("upcoming")
@@ -267,6 +304,18 @@ def viewUpcoming() -> None:
       showList.remove_title(showList.upcoming[selectedTitleIndex], "upcoming")
     printMsg("Successfully moved title.", "success")
     return
+  elif action == 3:
+    clear()
+    subheading("Edit Title")
+    print(f"What do you want to edit for '{Fore.LIGHTYELLOW_EX}{showList.upcoming[selectedTitleIndex]['title']}{Fore.RESET}'?")
+    print("[0] Current Episode | [1] Status | [2] Back |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 2 or action == -1:
+      return
+    elif action == 0:
+      changeEpisode("upcoming", selectedTitleIndex)
+    elif action == 1:
+      changeStatus("upcoming", selectedTitleIndex)
 
 
 def viewWatching() -> None:
@@ -277,9 +326,9 @@ def viewWatching() -> None:
   print()
   print(tabulate(showList.watching, headers="keys", tablefmt="fancy_grid", showindex="always"))
   print()
-  print("[0] View title | [1] Remove title | [2] Move title | [3] Back |")
+  print("[0] View title | [1] Remove title | [2] Move title | [3] Edit title | [4] Back |")
   action: int = getInput("int", "Select an action: ")
-  if action == 3:
+  if action == 4:
     clear()
     return
   selectedTitleIndex: int = viewList("watching")
@@ -322,6 +371,18 @@ def viewWatching() -> None:
       showList.remove_title(showList.watching[selectedTitleIndex], "watching")
     printMsg("Successfully moved title.", "success")
     return
+  elif action == 3:
+    clear()
+    subheading("Edit Title")
+    print(f"What do you want to edit for '{Fore.LIGHTYELLOW_EX}{showList.watching[selectedTitleIndex]['title']}{Fore.RESET}'?")
+    print("[0] Current Episode | [1] Status | [2] Back |")
+    action: int = getInput("int", "Select an action: ")
+    if action == 2 or action == -1:
+      return
+    elif action == 0:
+      changeEpisode("watching", selectedTitleIndex)
+    elif action == 1:
+      changeStatus("watching", selectedTitleIndex)
 
 
 def viewComplete() -> None:

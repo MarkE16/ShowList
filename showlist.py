@@ -1,6 +1,9 @@
 import json
 import imdb, github
 from datetime import datetime
+
+from imdb import IMDbDataAccessError
+
 from auth import *
 from time import time
 from github.GithubException import BadCredentialsException, RateLimitExceededException
@@ -225,7 +228,12 @@ class ShowList():
       case "cast":
         return info['cast']
       case "episodes":
-        return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
+        try:
+          return self.ia.get_movie_episodes(titleID)['data']['number of episodes']
+        except KeyError:
+          return "No episodes found."
+        except IMDbDataAccessError:
+          return "No episodes found."
       case "seasons":
         if info['kind'] == 'movie':
           raise TypeError("Title must be 'tv series' to get the number of seasons, not 'movie'.")
