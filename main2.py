@@ -105,6 +105,13 @@ def displayData(id: str) -> None:
   except IMDbDataAccessError as e:
     printMsg("Error: Unable to connect to IMDb. ERR: " + str({"error": e}), "error")
     return
+  except KeyError as e:
+    printMsg("Error: Unable to find show. ERR: " + str({"error": e}), "error")
+    return
+  except ValueError as e:
+    printMsg("Error: Unable to find show. ERR: " + str({"error": e}), "error")
+    return
+  url: str = showList.get_show_info(id, "url")
   dataKeys = data.keys()
   upcomingTitles: list = [title['title'] for title in showList.upcoming]
   watchingTitles: list = [title['title'] for title in showList.watching]
@@ -141,6 +148,7 @@ def displayData(id: str) -> None:
     f"{Fore.LIGHTBLUE_EX}Rating:{Fore.RESET} {data['rating'] if 'rating' in dataKeys else '?'}/10\n"
     f"{Fore.LIGHTBLUE_EX}Genres:{Fore.RESET} {[genre for genre in data['genres']] if 'genres' in dataKeys else 'No Genres Listed.'}\n"
     f"{Fore.LIGHTBLUE_EX}Plot:{Fore.RESET} {data['plot'][0] if 'plot' in dataKeys else 'No Plot Available.'}\n"
+    f"{Fore.LIGHTBLUE_EX}Url:{Fore.RESET} {url}\n"
   )
   print(f"[{inList if data['title'] in upcomingTitles else notInList}] Upcoming | [{inList if data['title'] in watchingTitles else notInList}] Watching | [{inList if data['title'] in completedTitles else notInList}] Complete")
 
@@ -163,7 +171,7 @@ def searchTitle() -> None:
   print()
   printMsg("Results displayed: " + str(len(results)) + "/" + str(showList.searchLimit), "info")
   selected: int = getInput("int", "Select a title to view more information: ")
-  titleID: str = showList.getTitleID(results[selected]["long imdb canonical title"])
+  titleID: str = showList.getTitleID(results[selected]["title"])
   print()
   displayData(titleID)
   print("| [0] Add to list | [1] Go back |")
@@ -484,10 +492,11 @@ def settings() -> None:
   subheading("Settings")
   print(f"{Fore.LIGHTBLUE_EX}Search Limit:{Fore.RESET} {showList.searchLimit}")
   print(f"{Fore.LIGHTBLUE_EX}Hints:{Fore.RESET} {showList.hints}")
+  print(f"{Fore.LIGHTBLUE_EX}Adult Content:{Fore.RESET} {showList.adult}")
   print()
-  print("[0] Change search limit | [1] Toggle hints | [2] Go back |")
+  print("[0] Change search limit | [1] Toggle hints | [2] Toggle Adult Content | [3] Go back |")
   action: int = getInput("int", "Select an action: ")
-  if action == 2:
+  if action == 3:
     clear()
     return
   elif action == 0:
@@ -500,6 +509,9 @@ def settings() -> None:
   elif action == 1:
     showList.toggle_hints()
     printMsg("Successfully toggled hints.", "success")
+  elif action == 2:
+    showList.toggle_adult()
+    printMsg("Successfully toggled adult content.", "success")
 
 def mainMenu() -> None:
   try:

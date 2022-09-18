@@ -3,6 +3,7 @@ import imdb, github
 from datetime import datetime
 
 from imdb import IMDbDataAccessError
+from imdb._exceptions import IMDbParserError
 
 from auth import *
 from time import time
@@ -36,12 +37,12 @@ class ShowList():
     self.__copyright__ = "Copyright (c) 2021-2022 Mark E"
     self.__repo__ = "https://github.com/MarkE16/ShowList"
     self.ia = imdb.Cinemagoer()
-    # self.bs = bs4.BeautifulSoup
     self.upcoming: list = []
     self.watching: list = []
     self.completed: list = []
     self.searchLimit = 10
     self.hints = True
+    self.adult = False
     self.github = github.Github() if TOKEN == "TOKEN" else github.Github(TOKEN)
 
   def load(self) -> None:
@@ -73,6 +74,13 @@ class ShowList():
     self.hints = not self.hints
 
 
+  def toggle_adult(self) -> None:
+    """
+    toggle_adult method. This method will toggle the adult content.
+    :return: None
+    """
+    self.adult = not self.adult
+
 
   @time_execution
   def search_show(self, title: str, limit:int=10) -> list:
@@ -83,11 +91,7 @@ class ShowList():
     :return: A list of shows corresponding to the search.
     """
     if isinstance(title, str):
-      return [show for show in self.ia.search_movie(title, limit)]
-      # print(requests.get(f"https://www.imdb.com/find?q={title}&ref_=nv_sr_sm").text)
-      # return [show for show in requests.get(f"https://v2.sg.media-imdb.com/suggests/{title[0]}/{title}.json").json().get("d")]
-      # print()
-
+      return [show for show in self.ia.search_movie_advanced(title, self.adult, limit)]
     else:
       raise TypeError("Parameter 'title' must be string.")
 
@@ -188,7 +192,11 @@ class ShowList():
     :return: The ID of the show.
     """
     if isinstance(queryName, str):
-      return self.ia.search_movie(queryName)[0].movieID
+      try:
+        return self.search_show(queryName)[0].movieID
+      except IndexError:
+        print("This is the error.")
+        return ""
     else:
       raise TypeError("Parameter 'queryName' must be string.")
 
@@ -207,7 +215,10 @@ class ShowList():
     #   info = self.ia.get_movie(show)
     # else:
     #   raise TypeError("Parameter 'show' must be string or int.")
-    info: dict = self.ia.get_movie(titleID)
+    try:
+      info: dict = self.ia.get_movie(titleID)
+    except IMDbParserError:
+      raise ValueError("Invalid title ID.")
     match data:
       case "all":
         return info.__dict__
