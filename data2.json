@@ -1,11 +1,14 @@
 {
-  "upcoming": [
-    {"title": "Demon Slayer: Kimetsu no Yaiba", "ep": 1, "status": "Upcoming"}
-  ],
-  "watching": [
-    {"title": "One Piece", "ep": 1, "status": "Watching"}
-  ],
+  "upcoming": [],
+  "watching": [],
   "completed": [
-    {"title": "My Hero Academia"}
-  ]
+    {
+      "title": "Demon Slayer: Kimetsu no Yaiba"
+    }
+  ],
+  "settings": {
+    "searchLimit": 10,
+    "hints": true,
+    "adult": false
+  }
 }

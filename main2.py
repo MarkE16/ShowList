@@ -231,11 +231,10 @@ def changeEpisode(l: str, index: int) -> None:
                        "Are you sure you want to change the current episode to '" + str(newEpisode) + "'? [y/n]: ")
   if confirm == "y":
     if l == "upcoming":
-      showList.upcoming[index]['ep'] = newEpisode
+      showList.update_title_info("upcoming", index, "ep", newEpisode)
     elif l == "watching":
-      showList.watching[index]['ep'] = newEpisode
-    elif l == "complete":
-      showList.completed[index]['ep'] = newEpisode
+      showList.update_title_info("watching", index, "ep", newEpisode)
+
     printMsg("Successfully changed current episode.", "success")
     return
   elif confirm == "n":
@@ -252,11 +251,9 @@ def changeStatus(l: str, index: int) -> None:
     printMsg("That is already the status.", "error")
     return
   if l == "upcoming":
-    showList.upcoming[index]['status'] = newStatus.capitalize()
+    showList.update_title_info("upcoming", index, "status", newStatus.capitalize())
   elif l == "watching":
-    showList.watching[index]['status'] = newStatus.capitalize()
-  elif l == "complete":
-    showList.completed[index]['status'] = newStatus.capitalize()
+    showList.update_title_info("watching", index, "status", newStatus.capitalize())
   printMsg("Successfully changed status.", "success")
 
 
@@ -433,7 +430,7 @@ def viewComplete() -> None:
   elif action == 2:
     clear()
     subheading("Move title")
-    print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]}{Fore.RESET}' to?")
+    print(f"Where you do want to move '{Fore.LIGHTYELLOW_EX}{showList.completed[selectedTitleIndex]['title']}{Fore.RESET}' to?")
     print("[0] Upcoming | [1] Watching | [2] Back |")
     action: int = getInput("int", "Select an action: ")
     if action == 2 or action == -1:
@@ -459,13 +456,14 @@ def checkForUpdates() -> None:
   if showList.up_to_date() and isinstance(showList.up_to_date(), bool):
     printMsg("You are up to date! No further actions needed.", "success")
   elif not showList.up_to_date() and isinstance(showList.up_to_date(), bool):
-    print(
+    input(
       "\r========================================================\n"
       f"{Fore.LIGHTYELLOW_EX}/!\{Fore.WHITE} A {Fore.YELLOW}new version{Fore.WHITE} is available!\n"
       ">>> Current version: " + showList.__version__ + " | Latest version: " + showList.fetchLatestVersion() + "\n"
       f"\nYou can download the latest version from: https://www.github.com/MarkE16/ShowList\n{Fore.RED}Note: Save data will not transfer, so you'll need to go into program's files and make a copy of the"
-      f" data.json file, then transfer it to the new version. More information about updating on the Github page.{Fore.WHITE}\n"
+      f" data.json file, then transfer it to the new version. More information about updating on the GitHub page.{Fore.WHITE}\n"
       "========================================================\n"
+      "[ENTER] Return |"
     )
   else:
     printMsg("An error occurred while checking for updates. Please try again later. ERR: " + str(showList.up_to_date()), "error")
@@ -473,6 +471,9 @@ def checkForUpdates() -> None:
 
 def programInfo() -> None:
   subheading("Program information")
+  if not showList.authenticated():
+    printMsg("You're not authenticated into GitHub. While this is not required, it is recommended that you do so to increase the amount of requests you can make, AKA the rate limit. If you choose not to authenticate, the program " \
+             "will still work, however you will be limited in requests, to which you are more likely to run out of requests to check for updates, thus not being able to check for updates.", "warning")
   print(
     f"{Fore.LIGHTBLUE_EX}Version:{Fore.RESET} {showList.__version__}\n"
     f"{Fore.LIGHTBLUE_EX}Author:{Fore.RESET} {showList.__author__}\n"
@@ -512,12 +513,15 @@ def settings() -> None:
   elif action == 2:
     showList.toggle_adult()
     printMsg("Successfully toggled adult content.", "success")
+  showList.save()
 
 def mainMenu() -> None:
   try:
     showList.load()
   except FileNotFoundError:
-    print("Failed to load data. The file 'data2.json' does not exist. Please create it in the root directory of the program.")
+    printMsg("Failed to load data. The file 'data2.json' does not exist. You can either: create the file yourself in the root directory, or save new data, which should create a new file.", "warning")
+  except KeyError:
+    printMsg("Failed to load data. The file 'data2.json' is corrupted. Saving new data to this file could have unexpected or unwanted results. For safety, please delete it and restart the program.", "warning")
   while True:
     print(
       f"{Fore.LIGHTBLUE_EX}Select an option to get started{Fore.RESET}\n"

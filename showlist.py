@@ -55,6 +55,28 @@ class ShowList():
       self.upcoming = data["upcoming"]
       self.watching = data["watching"]
       self.completed = data["completed"]
+      self.searchLimit = data["settings"]["searchLimit"]
+      self.hints = data["settings"]["hints"]
+      self.adult = data["settings"]["adult"]
+
+
+  def save(self) -> None:
+    """
+    save method. This method will save the data to the data file.
+    :return: None
+    """
+    data = {
+      "upcoming": self.upcoming,
+      "watching": self.watching,
+      "completed": self.completed,
+      "settings": {
+        "searchLimit": self.searchLimit,
+        "hints": self.hints,
+        "adult": self.adult
+      }
+    }
+    with open("data2.json", "w") as f:
+      json.dump(data, f, indent=2)
 
 
   def set_limit(self, newLimit: int) -> None:
@@ -119,6 +141,7 @@ class ShowList():
       self.completed.append({"title": title})
     else:
       raise ValueError("Invalid title list.")
+    self.save()
 
   @time_execution
   def remove_title(self, title: str | dict, titleList: str) -> None:
@@ -136,6 +159,34 @@ class ShowList():
       self.completed.remove(title)
     else:
       raise ValueError("Invalid title list.")
+    self.save()
+
+  def update_title_info(self, l: str, index: int, type: str, newValue: str | int) -> None:
+      """
+      update_title_info method. This method will update the information of a title.
+      :param l: The list to update the title in.
+      :param index: The index of the title in the list.
+      :param type: The type of information to update.
+      :param newValue: The new value of the information.
+      :return: None
+      """
+      if l == "upcoming":
+          if type == "ep":
+              self.upcoming[index]["ep"] = newValue
+          elif type == "status":
+              self.upcoming[index]["status"] = newValue
+          else:
+              raise ValueError("Invalid type.")
+      elif l == "watching":
+          if type == "ep":
+              self.watching[index]["ep"] = newValue
+          elif type == "status":
+              self.watching[index]["status"] = newValue
+          else:
+              raise ValueError("Invalid type.")
+      else:
+          raise ValueError("Invalid list.")
+      self.save()
 
 
   def fetchLatestVersion(self) -> str:
