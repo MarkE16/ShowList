@@ -1,5 +1,11 @@
 # SHOW LIST (OFFICIAL NAME IN PROGRESS)
 
+### !! WARNING | READ NOW
+```
+The code is currently UNSTABLE due to changes to how the [IMDB Python library](https://imdbpy.readthedocs.io/en/latest/) handled fetches for data. Because of this, it caused fetching data of movies/tv shows BROKEN.
+Please do not download the official release anymore until the newest version (v2) is released (which is currently unknown as of April 15, 2023.) Thank you.
+```
+
 ## Table of Contents
 
 - [About the Program](https://github.com/MarkE16/ShowList#about-the-program)
